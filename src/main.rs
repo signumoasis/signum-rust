@@ -1,4 +1,7 @@
 use clap::{App, Arg, SubCommand};
+use signum_cli::server_info;
+
+
 fn main() {
     let matches = App::new("Signum CLI")
         .version("0.1.0")
@@ -53,10 +56,9 @@ fn main() {
     let config = matches.value_of("config").unwrap_or("signumcli.conf");
     println!("Value for config: {}", config);
 
-    println!(
-        "Using node URL: {}",
-        matches.value_of("URL").unwrap_or("localhost:8125")
-    );
+    let address = matches.value_of("URL").unwrap_or("localhost:8125");
+
+    println!("Using node URL: {}", address);
 
     match matches.occurrences_of("v") {
         0 => println!("No verbose info"),
@@ -75,7 +77,10 @@ fn main() {
 
     match matches.subcommand() {
         ("serverinfo", Some(sub_m)) => match sub_m.subcommand() {
-            ("getmyinfo", Some(_sub_m)) => println!("getting the server info"),
+            ("getmyinfo", Some(_sub_m)) => {
+                println!("getting the server info");
+                println!("{}", server_info::handle_serverinfo_getmyinfo(&address).await);
+            }
             ("getpeers", Some(_sub_m)) => println!("here's all the peers"),
             _ => {}
         },
