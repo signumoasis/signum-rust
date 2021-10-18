@@ -1,8 +1,10 @@
-use clap::{App, Arg, SubCommand};
-use signum_cli::server_info;
+use clap::{App, Arg};
+use signum_cli::sub_commands::server_info::{
+    get_my_info::handle_serverinfo_getmyinfo, ClapAppServerInfoExtensions,
+};
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let matches = App::new("Signum CLI")
         .version("0.1.0")
         .author("damccull")
@@ -26,37 +28,14 @@ fn main() {
                 .multiple(true)
                 .help("Sets the level of verbosity"),
         )
-        .subcommand(
-            SubCommand::with_name("serverinfo")
-                .about("Gets information about a server")
-                .version("0.1.0")
-                .subcommand(
-                    SubCommand::with_name("getmyinfo")
-                        .about("Displays information about this server.")
-                        .version("0.1.0"),
-                )
-                .subcommand(
-                    SubCommand::with_name("getpeers")
-                        .about("Lists this server's peers.")
-                        .version("0.1.0"),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("serverpeerinfo")
-                .about("Gets information about a server's peers")
-                .version("0.1.0")
-                .subcommand(
-                    SubCommand::with_name("getmypeerinfo")
-                        .about("Displays information about this server.")
-                        .version("0.1.0"),
-                ),
-        )
+        .add_server_info_subcommands()
+        
         .get_matches();
 
     let config = matches.value_of("config").unwrap_or("signumcli.conf");
     println!("Value for config: {}", config);
 
-    let address = matches.value_of("URL").unwrap_or("localhost:8125");
+    let address = matches.value_of("URL").unwrap_or("http://localhost:8125");
 
     println!("Using node URL: {}", address);
 
@@ -64,7 +43,7 @@ fn main() {
         0 => println!("No verbose info"),
         1 => println!("Some verbose info"),
         2 => println!("Tons of verbose info"),
-        3 | _ => println!("All of the info. All of it."),
+        _ => println!("All of the info. All of it."),
     }
 
     if let Some(matches) = matches.subcommand_matches("test") {
@@ -78,8 +57,15 @@ fn main() {
     match matches.subcommand() {
         ("serverinfo", Some(sub_m)) => match sub_m.subcommand() {
             ("getmyinfo", Some(_sub_m)) => {
-                println!("getting the server info");
-                println!("{}", server_info::handle_serverinfo_getmyinfo(&address).await);
+                println!("getting the server info...");
+                if let Ok(result) = handle_serverinfo_getmyinfo(address).await {
+                    println!(
+                        "Address: {}, Host: {}, UUID: {}, Request Processing Time: {}",
+                        result.address, result.host, result.uuid, result.request_processing_time
+                    );
+                } else {
+                    println!("Unable to connect for some reason.");
+                }
             }
             ("getpeers", Some(_sub_m)) => println!("here's all the peers"),
             _ => {}

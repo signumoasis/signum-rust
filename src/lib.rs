@@ -1,1 +1,1 @@
-pub mod server_info;
+pub mod sub_commands;

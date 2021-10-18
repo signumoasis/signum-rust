@@ -1,11 +1,10 @@
 use std::str::FromStr;
 
-use signum_cli::server_info::{self, GetMyInfoResponse};
-use uuid::Uuid;
-use wiremock::{
-    matchers::{any, method, path},
-    Mock, MockServer, ResponseTemplate,
+use signum_cli::sub_commands::server_info::get_my_info::{
+    handle_serverinfo_getmyinfo, GetMyInfoResponse,
 };
+use uuid::Uuid;
+use wiremock::{matchers::any, Mock, MockServer, ResponseTemplate};
 
 #[actix_rt::test]
 async fn serverinfo_getmyinfo_works() {
@@ -34,9 +33,7 @@ async fn serverinfo_getmyinfo_works() {
         .await;
 
     // Act
-    let response = server_info::handle_serverinfo_getmyinfo(&app.address)
-        .await
-        .unwrap();
+    let response = handle_serverinfo_getmyinfo(&app.address).await.unwrap();
     // let response = reqwest::Client::new()
     //     .get(&format!("{}/burst?requestType=getPeers", &app.address))
     //     .send()
