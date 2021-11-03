@@ -1,0 +1,9 @@
+[submodule "signum-rs"]
+	path = signum-rs
+	url = git@github.com:signum-rust/signum-rs.git
+[submodule "signum-node-rs"]
+	path = signum-node-rs
+	url = git@github.com:signum-rust/signum-node-rs.git
+[submodule "signum-cli"]
+	path = signum-cli
+	url = git@github.com:signum-rust/signum-cli.git

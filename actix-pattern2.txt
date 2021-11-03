@@ -1,0 +1,41 @@
+use std::io;
+
+use actix_web::{get, App,HttpServer};
+
+fn main() -> io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix=trace");
+    env_logger::init();
+
+    let (tx, rx) = std::sync::mpsc::sync_channel(1);
+
+    let actix = std::thread::spawn(move || {
+        actix_web::rt::System::new()
+            .block_on(async {
+                let server = HttpServer::new(|| App::new().service(index))
+                .bind("127.0.0.1:8080")?
+                .run();
+    
+                tx.send(server.clone()).unwrap();
+
+                server.await
+        })
+    });
+
+    let server = rx.recv().unwrap();
+
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .enable_all()
+        .build()?
+        .block_on(async {
+
+            server.await
+        })?;
+
+    actix.join().unwrap()    
+}
+
+#[get("/")]
+async fn index() -> &'static str {
+    "Hello World!"
+}
