@@ -47,5 +47,12 @@ Modules available:
         * Aware of active modules
         * Registers endpoints for handlers in each module
         * Forwards requests to api handlers in each module
-        * Provides peer to peer networking on a sub-path `/peer` or `/p2p`
-    
+        * Provides standard user API as well as extended capability on `/api` on port 8125/443 over https
+        * Provides peer to peer over http on port 8123 by default
+    pool_service
+        * Provides pool mining capability
+        * Exposes appropriate pool endpoints
+        * Integrate with main API if possible
+    explorer_service
+        * Serves a chain explorer website
+        * Integrate with API for the back end
