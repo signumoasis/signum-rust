@@ -1,6 +1,7 @@
 use clap::{App, Arg};
-use signum_cli::sub_commands::server_info::{
-    get_my_info::handle_serverinfo_getmyinfo, ClapAppServerInfoExtensions,
+use signum_cli::sub_commands::{
+    ping::{self, handle_ping, ClapAppPingExtension},
+    server_info::{get_my_info::handle_serverinfo_getmyinfo, ClapAppServerInfoExtensions},
 };
 
 #[tokio::main]
@@ -29,7 +30,7 @@ async fn main() {
                 .help("Sets the level of verbosity"),
         )
         .add_server_info_subcommands()
-        
+        .add_ping_subcommands()
         .get_matches();
 
     let config = matches.value_of("config").unwrap_or("signumcli.conf");
@@ -74,6 +75,15 @@ async fn main() {
             if let ("getmypeerinfo", Some(_sub_m)) = sub_m.subcommand() {
                 println!("getting the server's peer info")
             }
+        }
+        (ping::SUBCOMMAND_NAME, Some(sub_m)) => {
+            if let Ok(result) = handle_ping(address).await {
+                println!("Pinged the server: {:#?}", result);
+            } else {
+                println!("Unable to connect to server...")
+            }
+            // println!("Ping called");
+            // dbg!(sub_m);
         }
         _ => {}
     }
