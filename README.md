@@ -7,52 +7,52 @@ This design will allow the program to launch as a single executable that can ope
 
 ## Basic Design
 Modules available:
-    peer_service
+    * peer_service
         * Retrieves and forwards peers
         * Pushes peers to datastore
         * Checks peers for life
         * Passes peers to other modules on demand
         * Optionally removes old peers
-    block_service
+    * block_service
         * Downloads blocks
         * Verification of blocks
         * Pushes blocks to datastore
-    transaction_service
+    * transaction_service
         * Downloads and verifies transactions
         * Pushes transactions to datastore
         * Handles subscriptions
         * Handles escrow
         * Handles setting signa commitment
-    smart_contract_service
+    * smart_contract_service
         * Compiles, schedules, and computes smart contracts
         * _maybe this gets rolled into transactions_
-    market_service
+    * market_service
         * Processes data related to the built-in marketplace
-    token_service
+    * token_service
         * Creates and destroys tokens
         * Maintains a list of tokens
         * Token exchange
-    alias_service
+    * alias_service
         * Creates and deletes aliases
-    mining_service
+    * mining_service
         * Handles generating numbers for miners
         * Handles validating new blocks before block processor takes over?
         * Calculates bonus factor for hdd space
-    datastore
+    * datastore
         * Persists and retrieving blocks and other data
-    UI
+    * UI
         * The user interface, handles user interaction
-    api_service
+    * api_service
         * Provides programmatic access to the node
         * Aware of active modules
         * Registers endpoints for handlers in each module
         * Forwards requests to api handlers in each module
         * Provides standard user API as well as extended capability on `/api` on port 8125/443 over https
         * Provides peer to peer over http on port 8123 by default
-    pool_service
+    * pool_service
         * Provides pool mining capability
         * Exposes appropriate pool endpoints
         * Integrate with main API if possible
-    explorer_service
+    * explorer_service
         * Serves a chain explorer website
         * Integrate with API for the back end
