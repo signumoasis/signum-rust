@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use rand::prelude::SliceRandom;
+use rand::prelude::{IteratorRandom, SliceRandom};
 use serde::Deserialize;
 use tokio::sync::{mpsc, oneshot};
 
@@ -8,16 +8,16 @@ use tokio::sync::{mpsc, oneshot};
 /// It also returns peers to be used by other services.
 pub struct PeerService {
     receiver: mpsc::Receiver<PeerMessage>,
-    peers_cache: Vec<Peer>,
-    blacklisted_peer_cache: Vec<Peer>,
+    peers_cache: HashMap<PeerAddress, Peer>,
+    blacklisted_peer_cache: HashMap<PeerAddress, Peer>,
 }
 impl PeerService {
     #[tracing::instrument(name = "PeerServiceq.new()", skip(receiver))]
     pub fn new(receiver: mpsc::Receiver<PeerMessage>) -> Self {
         Self {
             receiver,
-            peers_cache: Vec::<Peer>::new(),
-            blacklisted_peer_cache: Vec::<Peer>::new(),
+            peers_cache: HashMap::<PeerAddress, Peer>::new(),
+            blacklisted_peer_cache: HashMap::<PeerAddress, Peer>::new(),
         }
     }
 
@@ -26,21 +26,21 @@ impl PeerService {
         match msg {
             PeerMessage::GetRandomPeer { respond_to } => {
                 //TODO: Consider randomly selecting from the database?
-                let _ = respond_to.send(
-                    self.peers_cache
-                        .choose(&mut rand::thread_rng())
-                        .map(Clone::clone),
-                );
+                match self.peers_cache.keys().choose(&mut rand::thread_rng()) {
+                    Some(key) => {
+                        let _ = respond_to.send(self.peers_cache.get(key).cloned());
+                    }
+                    None => {
+                        let _ = respond_to.send(None);
+                    }
+                }
             }
             PeerMessage::GetPeer {
                 respond_to,
                 peer_address,
             } => {
-                let peer = self
-                    .peers_cache
-                    .iter()
-                    .find(|p| p.announced_address == Some(peer_address.clone()));
-                let _ = respond_to.send(peer.map(Clone::clone));
+                let peer = self.peers_cache.get(&peer_address);
+                let _ = respond_to.send(peer.cloned());
             }
             PeerMessage::BlacklistPeer { respond_to } => todo!(),
         }
@@ -135,7 +135,7 @@ pub struct Peer {
     share_address: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 // #[serde(try_from = "String")]
 #[serde(transparent)]
 pub struct PeerAddress(pub String);
