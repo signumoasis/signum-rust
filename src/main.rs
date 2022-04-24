@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use signum_node_rs::peer_service::{Peer, PeerContainer};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -77,40 +77,3 @@ async fn main() -> Result<()> {
     dbg!(all_peers);
     Ok(())
 }
-
-/// Necessary because of poor json formatting decisions in the source data.
-#[derive(Debug, Deserialize)]
-struct PeerContainer {
-    #[serde(rename = "peers")]
-    peers: Vec<PeerAddress>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Peer {
-    announced_address: Option<PeerAddress>,
-    application: String,
-    version: String,
-    platform: Option<String>,
-    share_address: bool,
-}
-
-#[derive(Debug, Deserialize)]
-// #[serde(try_from = "String")]
-#[serde(transparent)]
-struct PeerAddress(String);
-// impl TryFrom<String> for PeerAddress {
-//     type Error = anyhow::Error;
-
-//     fn try_from(value: String) -> Result<Self, Self::Error> {
-//         if validate_peer_address(&value) {
-//             Ok(Self(value))
-//         } else {
-//             Err(anyhow::anyhow!("Invalid peer address: {}", value))
-//         }
-//     }
-// }
-
-// fn validate_peer_address(value: &str) -> bool {
-
-// }
