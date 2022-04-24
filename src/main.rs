@@ -33,6 +33,7 @@ async fn main() -> Result<()> {
     for p in peers {
         let tx = tx.clone();
         // Get each peer's peerinfo
+        //TODO: move this getInfo call into the Peer impl on a function
         tokio::spawn(async move {
             // let p = PeerAddress("p2p.signumoasis.xyz".to_string());
             let mut peer_req_body = HashMap::new();
@@ -69,7 +70,7 @@ async fn main() -> Result<()> {
                 }
             };
             tracing::debug!(
-                "DEBUG: Deserialized `{}`. Sending answer to main thread",
+                "Deserialized `{}`. Sending answer to main thread",
                 p.0.clone()
             );
             tx.send(peer).await
