@@ -2,9 +2,17 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 use signum_node_rs::peer_service::{Peer, PeerContainer};
+use signum_node_rs::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
+#[tracing::instrument(name = "Main")]
 async fn main() -> Result<()> {
+    // Begin by setting up tracing
+    let subscriber = get_subscriber("signum-node-rs".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
+
+    tracing::info!("Started the program.");
+
     let address = "http://p2p.signumoasis.xyz";
 
     let mut thebody = HashMap::new();
@@ -38,7 +46,7 @@ async fn main() -> Result<()> {
             };
             let addy = format!("http://{}{}", p.0.clone(), port);
 
-            println!("DEBUG: Checking `{}`", p.0.clone());
+            tracing::debug!("Checking `{}`", p.0.clone());
             let info = reqwest::Client::new()
                 .post(addy)
                 .header("User-Agent", "BRS/3.3.4")
@@ -46,21 +54,21 @@ async fn main() -> Result<()> {
                 .send()
                 .await;
 
-            println!("DEBUG: Received from `{}`. Deserializing", p.0.clone());
+            tracing::debug!("Received from `{}`. Deserializing", p.0.clone());
             let peer = match info {
                 Ok(r) => match r.json::<Peer>().await {
                     Ok(r) => r,
                     Err(e) => {
-                        println!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
+                        tracing::warn!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
                         panic!("IT BROKE!")
                     }
                 },
                 Err(e) => {
-                    println!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
+                    tracing::warn!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
                     panic!("IT BROKE!")
                 }
             };
-            println!(
+            tracing::debug!(
                 "DEBUG: Deserialized `{}`. Sending answer to main thread",
                 p.0.clone()
             );
