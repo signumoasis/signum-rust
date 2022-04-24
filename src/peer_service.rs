@@ -134,6 +134,16 @@ pub struct Peer {
     platform: Option<String>,
     share_address: bool,
 }
+impl Peer {
+    fn get_peers() {}
+    fn get_info() {}
+    fn get_milestone_block_ids() {}
+    fn get_next_block_ids() {}
+    fn get_unconfirmed_transactions() {}
+    fn request_add_peers() {}
+    fn request_process_block() {}
+    fn request_process_transactions() {}
+}
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 // #[serde(try_from = "String")]
