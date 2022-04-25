@@ -1,3 +1,4 @@
+use anyhow::Result;
 use tokio::sync::mpsc;
 
 use crate::models::p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction};
@@ -20,13 +21,13 @@ pub enum PeerMessage {
         respond_to: mpsc::Sender<Vec<Transaction>>,
     },
     CallAddPeers {
-        respond_to: mpsc::Sender<anyhow::Result<()>>,
+        respond_to: mpsc::Sender<Result<()>>,
     },
     CallProcessBlock {
-        respond_to: mpsc::Sender<anyhow::Result<()>>,
+        respond_to: mpsc::Sender<Result<()>>,
     },
     CallProcessTransactions {
-        respond_to: mpsc::Sender<anyhow::Result<()>>,
+        respond_to: mpsc::Sender<Result<()>>,
     },
 }
 
@@ -46,7 +47,7 @@ impl Peer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PeerHandle {
     sender: mpsc::Sender<PeerMessage>,
 }
@@ -63,7 +64,7 @@ impl PeerHandle {
     /// Instructs the `[Peer]` to contact the remote node and
     /// get its list of peers.
     #[tracing::instrument(name = "PeerHandle.get_peers()")]
-    pub async fn call_get_peers() -> Vec<PeerAddress> {
+    pub async fn call_get_peers(&self) -> Result<Vec<PeerAddress>> {
         todo!();
     }
 
@@ -71,49 +72,52 @@ impl PeerHandle {
     /// get its server info. This will also push own node's
     /// info to the remote node.
     #[tracing::instrument(name = "PeerHandle.get_info()")]
-    pub async fn call_get_info() -> PeerInfo {
+    pub async fn call_get_info(&self) -> Result<PeerInfo> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request a list of Milestone Block IDs.
     #[tracing::instrument(name = "PeerHandle.get_milestone_block_ids()")]
-    pub async fn call_get_milestone_block_ids() -> Vec<BlockId> {
+    pub async fn call_get_milestone_block_ids(&self) -> Result<Vec<BlockId>> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request a list of the next Block IDs.
     #[tracing::instrument(name = "PeerHandle.get_next_block_ids()")]
-    pub async fn call_get_next_block_ids() -> Vec<BlockId> {
+    pub async fn call_get_next_block_ids(&self) -> Result<Vec<BlockId>> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request all unconfirmed transactions.
     #[tracing::instrument(name = "PeerHandle.unconfirmed_transactions()")]
-    pub async fn call_get_unconfirmed_transactions() -> Vec<Transaction> {
+    pub async fn call_get_unconfirmed_transactions(&self) -> Result<Vec<Transaction>> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request that it add a supplied peer.
     #[tracing::instrument(name = "PeerHandle.add_peers()")]
-    pub async fn call_add_peers(peer: PeerInfo) -> anyhow::Result<()> {
+    pub async fn call_add_peers(&self, peer: PeerInfo) -> Result<()> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request that it process a supplied block.
     #[tracing::instrument(name = "PeerHandle.process_block()")]
-    pub async fn call_process_block(block: ExchangeableBlock) -> anyhow::Result<()> {
+    pub async fn call_process_block(&self, block: ExchangeableBlock) -> Result<()> {
         todo!();
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
     /// request that it process a supplied list of transactions.
     #[tracing::instrument(name = "PeerHandle.new()")]
-    pub async fn call_process_transactions(transactions: Vec<Transaction>) -> anyhow::Result<()> {
+    pub async fn call_process_transactions(
+        &self,
+        transactions: Vec<Transaction>,
+    ) -> Result<()> {
         todo!();
     }
 }
