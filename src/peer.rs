@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use tokio::sync::mpsc;
 
-use crate::models::p2p::{BlockId, PeerAddress, PeerInfo, Transaction};
+use crate::models::p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction};
 
 #[derive(Debug)]
 pub enum PeerMessage {
@@ -88,17 +86,17 @@ impl PeerHandle {
     }
 
     #[tracing::instrument(name = "PeerHandle.add_peers()")]
-    pub async fn call_add_peers() -> anyhow::Result<()> {
+    pub async fn call_add_peers(peer: PeerInfo) -> anyhow::Result<()> {
         todo!();
     }
 
     #[tracing::instrument(name = "PeerHandle.process_block()")]
-    pub async fn call_process_block() -> anyhow::Result<()> {
+    pub async fn call_process_block(block: ExchangeableBlock) -> anyhow::Result<()> {
         todo!();
     }
 
     #[tracing::instrument(name = "PeerHandle.new()")]
-    pub async fn call_process_transactions() -> anyhow::Result<()> {
+    pub async fn call_process_transactions(transactions: Vec<Transaction>) -> anyhow::Result<()> {
         todo!();
     }
 }
