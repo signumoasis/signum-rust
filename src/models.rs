@@ -38,4 +38,7 @@ pub mod p2p {
 
     #[derive(Debug)]
     pub struct Transaction;
+
+    #[derive(Debug)]
+    pub struct ExchangeableBlock;
 }
