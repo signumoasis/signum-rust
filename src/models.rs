@@ -2,10 +2,18 @@ pub mod p2p {
     use std::str::FromStr;
 
     use reqwest::Url;
+    use serde::Deserialize;
     use serde_with::DeserializeFromStr;
 
-    #[derive(Debug)]
-    pub struct PeerInfo;
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct PeerInfo {
+        pub announced_address: Option<PeerAddress>,
+        pub application: String,
+        pub version: String,
+        pub platform: Option<String>,
+        pub share_address: bool,
+    }
 
     #[derive(Clone, Debug, DeserializeFromStr, Eq, Hash, PartialEq)]
     pub struct PeerAddress(String);
