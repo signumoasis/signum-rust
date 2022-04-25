@@ -14,10 +14,6 @@ pub mod p2p {
 
         #[tracing::instrument(name = "models::P2P::PeerAddress.try_from()")]
         fn from_str(value: &str) -> Result<Self, Self::Err> {
-            //Verify proper URL parse
-            //Extract host and port
-            //Return as `host:port`
-
             // Remove any existing scheme by splitting on "://" if it exists and only taking the right half
             // or taking the base value if no "://" exists
             let value = value.split_once("://").unwrap_or(("", value)).1;
