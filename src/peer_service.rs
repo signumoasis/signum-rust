@@ -1,7 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use anyhow::Context;
-use rand::prelude::{IteratorRandom, SliceRandom};
+use rand::prelude::IteratorRandom;
 use serde::Deserialize;
 use tokio::{
     sync::{mpsc, oneshot},
@@ -46,6 +45,7 @@ impl PeerService {
     #[tracing::instrument(name = "PeerService.handle_message()", skip(self))]
     fn handle_message(&mut self, msg: PeerMessage) {
         match msg {
+            PeerMessage::AddPeer { respond_to } => todo!(),
             PeerMessage::GetRandomPeer { respond_to } => {
                 //TODO: Consider randomly selecting from the database?
                 match self.peers_cache.keys().choose(&mut rand::thread_rng()) {
@@ -158,6 +158,9 @@ pub async fn run_peer_service(mut service: PeerService) {
 
 #[derive(Debug)]
 pub enum PeerMessage {
+    AddPeer {
+        respond_to: oneshot::Sender<Option<Peer>>,
+    },
     GetRandomPeer {
         respond_to: oneshot::Sender<Option<Peer>>,
     },
