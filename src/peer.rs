@@ -1,61 +1,80 @@
 use anyhow::Result;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 
 use crate::models::p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction};
 
+/// Messages to send a request to the remote node this `[Peer]` represents.
+#[derive(Debug)]
+pub enum RemotePeerMessage {
+    GetPeers {
+        respond_to: oneshot::Sender<Vec<PeerAddress>>,
+    },
+    GetInfo {
+        respond_to: oneshot::Sender<PeerInfo>,
+    },
+    GetMilestoneBlockIds {
+        respond_to: oneshot::Sender<Vec<BlockId>>,
+    },
+    GetNextBlockIds {
+        respond_to: oneshot::Sender<Vec<BlockId>>,
+    },
+    UnconfirmedTransactions {
+        respond_to: oneshot::Sender<Vec<Transaction>>,
+    },
+    AddPeers {
+        respond_to: oneshot::Sender<Result<()>>,
+    },
+    ProcessBlock {
+        respond_to: oneshot::Sender<Result<()>>,
+    },
+    ProcessTransactions {
+        respond_to: oneshot::Sender<Result<()>>,
+    },
+}
+
 #[derive(Debug)]
 pub enum PeerMessage {
-    CallGetPeers {
-        respond_to: mpsc::Sender<Vec<PeerAddress>>,
+    SetPeerInfo {
+        respond_to: oneshot::Sender<Result<()>>,
     },
-    CallGetInfo {
-        respond_to: mpsc::Sender<PeerInfo>,
-    },
-    CallGetMilestoneBlockIds {
-        respond_to: mpsc::Sender<Vec<BlockId>>,
-    },
-    CallGetNextBlockIds {
-        respond_to: mpsc::Sender<Vec<BlockId>>,
-    },
-    CallUnconfirmedTransactions {
-        respond_to: mpsc::Sender<Vec<Transaction>>,
-    },
-    CallAddPeers {
-        respond_to: mpsc::Sender<Result<()>>,
-    },
-    CallProcessBlock {
-        respond_to: mpsc::Sender<Result<()>>,
-    },
-    CallProcessTransactions {
-        respond_to: mpsc::Sender<Result<()>>,
+    GetPeerInfo {
+        respond_to: oneshot::Sender<Option<PeerInfo>>,
     },
 }
 
 #[derive(Debug)]
 struct Peer {
-    receiver: mpsc::Receiver<PeerMessage>,
+    receiver: mpsc::Receiver<RemotePeerMessage>,
+    address: PeerAddress,
+    peer_info: Option<PeerInfo>,
+    last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
 }
 impl Peer {
     #[tracing::instrument(name = "Peer.new()")]
-    pub fn new(receiver: mpsc::Receiver<PeerMessage>) -> Self {
-        Self { receiver }
+    pub fn new(receiver: mpsc::Receiver<RemotePeerMessage>, address: PeerAddress) -> Self {
+        Self {
+            receiver,
+            address,
+            peer_info: None,
+            last_contact: None,
+        }
     }
 
     #[tracing::instrument(name = "Peer.handle_message()", skip(self))]
-    fn handle_message(&mut self, msg: PeerMessage) {
+    fn handle_message(&mut self, msg: RemotePeerMessage) {
         todo!();
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct PeerHandle {
-    sender: mpsc::Sender<PeerMessage>,
+    sender: mpsc::Sender<RemotePeerMessage>,
 }
 impl PeerHandle {
     #[tracing::instrument(name = "PeerHandle.new()")]
-    pub fn new() -> Self {
+    pub fn new(address: PeerAddress) -> Self {
         let (sender, receiver) = mpsc::channel(8);
-        let actor = Peer::new(receiver);
+        let actor = Peer::new(receiver, address);
         tokio::spawn(run_peer_actor(actor));
 
         Self { sender }
@@ -114,10 +133,15 @@ impl PeerHandle {
     /// Instructs the `[Peer]` to contact the remote node and
     /// request that it process a supplied list of transactions.
     #[tracing::instrument(name = "PeerHandle.new()")]
-    pub async fn call_process_transactions(
-        &self,
-        transactions: Vec<Transaction>,
-    ) -> Result<()> {
+    pub async fn call_process_transactions(&self, transactions: Vec<Transaction>) -> Result<()> {
+        todo!();
+    }
+
+    pub async fn set_peer_info(info: PeerInfo) {
+        todo!();
+    }
+
+    pub async fn get_peer_info() -> Option<PeerInfo> {
         todo!();
     }
 }
