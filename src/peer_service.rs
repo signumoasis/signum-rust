@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, time::Duration, sync::Arc};
 
 use rand::prelude::IteratorRandom;
 use serde::Deserialize;
@@ -80,22 +80,27 @@ impl PeerService {
         // 4. Loop all peers in local collection to spin up new tokio::spawn get peer info and return PeerInfo results here
         // 5. On success, report any PeerInfos to the PeerService, which will add them to datastore
 
-        tracing::debug!("PEERS CACHE - PRE-DISCOVERY\n{:#?}", &self.peers_cache);
-        for (_, p) in self.peers_cache.clone().iter_mut() {
-            let refreshed_peer = match p.call_get_info().await {
-                Ok(x) => x,
-                Err(e) => {
-                    tracing::error!("error with peer discovery: {}", e);
-                    return;
-                }
-            };
+        let local_cache = self.peers_cache.clone();
+        for p in local_cache.into_values() {
 
-            if let Some(peer_address) = &refreshed_peer.address {
-                self.peers_cache
-                    .insert(peer_address.clone(), refreshed_peer);
-            }
         }
-        tracing::debug!("PEERS CACHE - POST-DISCOVERY\n{:#?}", &self.peers_cache);
+
+        // tracing::debug!("PEERS CACHE - PRE-DISCOVERY\n{:?}", &self.peers_cache);
+        // for (_, p) in self.peers_cache.clone().iter_mut() {
+        //     let refreshed_peer = match p.call_get_info().await {
+        //         Ok(x) => x,
+        //         Err(e) => {
+        //             tracing::error!("error with peer discovery: {}", e);
+        //             return;
+        //         }
+        //     };
+
+        //     if let Some(peer_address) = &refreshed_peer.address {
+        //         self.peers_cache
+        //             .insert(peer_address.clone(), refreshed_peer);
+        //     }
+        // }
+        // tracing::debug!("PEERS CACHE - POST-DISCOVERY\n{:?}", &self.peers_cache);
     }
 }
 
@@ -152,7 +157,7 @@ impl PeerServiceHandle {
 }
 
 #[tracing::instrument(name = "run_peer_service", skip(service))]
-pub async fn run_peer_service(mut service: PeerService) {
+async fn run_peer_service(mut service: PeerService) {
     let mut interval = time::interval(Duration::from_millis(30000));
     loop {
         tokio::select! {
