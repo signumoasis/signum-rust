@@ -1,8 +1,9 @@
 use anyhow::Result;
 use std::collections::HashMap;
 
-use signum_node_rs::peer_service::{Peer, PeerContainer};
+use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::telemetry::{get_subscriber, init_subscriber};
+use tokio::time;
 
 #[tokio::main]
 #[tracing::instrument(name = "Main")]
@@ -13,6 +14,20 @@ async fn main() -> Result<()> {
 
     tracing::info!("Started the program.");
 
+    interval_actor_demo().await;
+    Ok(())
+}
+
+async fn interval_actor_demo() {
+    let peer = PeerServiceHandle::new();
+
+    let mut interval = time::interval(time::Duration::from_secs(5));
+    for _i in 0..30 {
+        interval.tick().await;
+    }
+}
+
+async fn run_peer_demo() -> Result<()> {
     let address = "http://p2p.signumoasis.xyz";
 
     let mut thebody = HashMap::new();

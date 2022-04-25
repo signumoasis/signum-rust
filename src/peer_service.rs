@@ -1,8 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
+use anyhow::Context;
 use rand::prelude::{IteratorRandom, SliceRandom};
 use serde::Deserialize;
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time,
+};
+
+pub const USER_AGENT: &str = "BRS/3.3.4";
 
 /// The PeerService discovers, manages, and blacklists peers.
 /// It also returns peers to be used by other services.
@@ -14,9 +20,25 @@ pub struct PeerService {
 impl PeerService {
     #[tracing::instrument(name = "PeerServiceq.new()", skip(receiver))]
     pub fn new(receiver: mpsc::Receiver<PeerMessage>) -> Self {
+        //TODO: Get seed peers from config and load peers from database
+        // simulate seed peer
+        let seed_peer = Peer {
+            ip_address: "".into(),
+            port: 80,
+            announced_address: Some(PeerAddress("p2p.signumoasis.xyz:80".into())),
+            application: "".into(),
+            version: "".into(),
+            platform: Some("".into()),
+            share_address: true,
+        };
+
+        let mut initial_cache = HashMap::new();
+        if let Some(peer_address) = &seed_peer.announced_address {
+            initial_cache.insert(peer_address.clone(), seed_peer);
+        }
         Self {
             receiver,
-            peers_cache: HashMap::<PeerAddress, Peer>::new(),
+            peers_cache: initial_cache,
             blacklisted_peer_cache: HashMap::<PeerAddress, Peer>::new(),
         }
     }
@@ -42,8 +64,30 @@ impl PeerService {
                 let peer = self.peers_cache.get(&peer_address);
                 let _ = respond_to.send(peer.cloned());
             }
-            PeerMessage::BlacklistPeer { respond_to } => todo!(),
+            PeerMessage::BlacklistPeer { respond_to } => {
+                let _ = respond_to.send(Ok(()));
+            }
         }
+    }
+
+    #[tracing::instrument(name = "PeerService.discover_peers()", skip(self))]
+    pub(crate) async fn discover_peers(&mut self) {
+        tracing::debug!("PEERS CACHE - PRE-DISCOVERY\n{:#?}", &self.peers_cache);
+        for (_, p) in self.peers_cache.clone().iter_mut() {
+            let refreshed_peer = match p.get_info().await {
+                Ok(x) => x,
+                Err(e) => {
+                    tracing::error!("error with peer discovery: {}", e);
+                    return;
+                }
+            };
+
+            if let Some(peer_address) = &refreshed_peer.announced_address {
+                self.peers_cache
+                    .insert(peer_address.clone(), refreshed_peer);
+            }
+        }
+        tracing::debug!("PEERS CACHE - POST-DISCOVERY\n{:#?}", &self.peers_cache);
     }
 }
 
@@ -66,32 +110,49 @@ impl PeerServiceHandle {
     /// no peer can be found.
     #[tracing::instrument(name = "PeerServiceHandle.get_random_peer()", skip(self))]
     pub async fn get_random_peer(&self) -> Option<Peer> {
-        let (send, recv) = oneshot::channel();
-        let msg = PeerMessage::GetRandomPeer { respond_to: send };
+        let (tx, rx) = oneshot::channel();
+        let msg = PeerMessage::GetRandomPeer { respond_to: tx };
 
         let _ = self.sender.send(msg).await;
-        recv.await.expect("PeerService has been killed")
+        rx.await.expect("PeerService has been killed")
     }
 
     /// Requests a specific `Option<[Peer]>` by `[PeerAddress]` from the [`PeerService`]. Returns None if
     /// no peer can be found.
     #[tracing::instrument(name = "PeerServiceHandle.get_peer_by_address()", skip(self))]
     pub async fn get_peer_by_address(&self, address: PeerAddress) -> Option<Peer> {
-        todo!()
-    }
-}
+        let (tx, rx) = oneshot::channel();
+        let msg = PeerMessage::GetPeer {
+            respond_to: tx,
+            peer_address: address,
+        };
 
-impl Default for PeerServiceHandle {
-    fn default() -> Self {
-        Self::new()
+        let _ = self.sender.send(msg).await;
+        rx.await.expect("PeerService has been killed")
+    }
+
+    pub async fn test_event(&self) -> String {
+        let (tx, rx) = oneshot::channel();
+        let msg = PeerMessage::BlacklistPeer { respond_to: tx };
+        let _ = self.sender.send(msg).await;
+
+        match rx.await {
+            Ok(_) => "Successful blacklist test.".into(),
+            Err(_) => "F- on your test".into(),
+        }
     }
 }
 
 #[tracing::instrument(name = "run_peer_service", skip(service))]
-async fn run_peer_service(mut service: PeerService) {
-    //TODO: spawn tasks for peer discover etc
-    while let Some(msg) = service.receiver.recv().await {
-        service.handle_message(msg);
+pub async fn run_peer_service(mut service: PeerService) {
+    let mut interval = time::interval(Duration::from_millis(30000));
+    loop {
+        tokio::select! {
+            // PeerMessage handler
+            Some(peer_msg) = service.receiver.recv() => service.handle_message(peer_msg),
+            // Peer discovery task
+            _ = interval.tick() => service.discover_peers().await,
+        }
     }
 }
 
@@ -135,14 +196,65 @@ pub struct Peer {
     share_address: bool,
 }
 impl Peer {
-    fn get_peers() {}
-    fn get_info() {}
-    fn get_milestone_block_ids() {}
-    fn get_next_block_ids() {}
-    fn get_unconfirmed_transactions() {}
-    fn request_add_peers() {}
-    fn request_process_block() {}
-    fn request_process_transactions() {}
+    pub async fn get_peers() {}
+
+    #[tracing::instrument(name = "Peer.get_info()", skip(self))]
+    pub(crate) async fn get_info(&self) -> Result<Peer, anyhow::Error> {
+        tracing::debug!("Started to get info");
+        let (request, mut body) = self.get_request_p2p_client().await?;
+        body.insert("requestType".into(), "getInfo".into());
+
+        let response = request.json(&body).send().await?;
+
+        tracing::debug!("Received from `{}`. Deserializing", &self.ip_address);
+
+        let peer = response.json::<Peer>().await?;
+
+        tracing::debug!(
+            "Deserialized `{}`. Sending answer to main thread",
+            &self.ip_address
+        );
+        Ok(peer)
+    }
+    pub async fn get_milestone_block_ids() {}
+    pub async fn get_next_block_ids() {}
+    pub async fn get_unconfirmed_transactions() {}
+    pub async fn request_add_peers() {}
+    pub async fn request_process_block() {}
+    pub async fn request_process_transactions() {}
+
+    async fn get_request_p2p_client(
+        &self,
+    ) -> Result<(reqwest::RequestBuilder, HashMap<String, String>), anyhow::Error> {
+        let ip = match &self.announced_address {
+            Some(announced_address) => {
+                match tokio::net::lookup_host(announced_address.0.to_string()).await {
+                    Ok(_) => announced_address.0.clone(),
+                    Err(e) => {
+                        return Err(anyhow::anyhow!(
+                            "error getting socket address from announced address: {}",
+                            e
+                        ));
+                    }
+                }
+            }
+            None => match tokio::net::lookup_host(&self.ip_address).await {
+                Ok(ips) => ips.collect::<Vec<_>>()[0].to_string(),
+                Err(e) => {
+                    return Err(anyhow::anyhow!("ip address could not be turned into socket address and no announced address present: {}",e));
+                }
+            },
+        };
+
+        let url = format!("http://{}", ip);
+        tracing::debug!("Signum P2P Url Requested: {}", &url);
+        let builder = reqwest::Client::new()
+            .post(url)
+            .header("User-Agent", USER_AGENT);
+        let mut body = HashMap::<String, String>::new();
+        body.insert("protocol".into(), "B1".into());
+        Ok((builder, body))
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
