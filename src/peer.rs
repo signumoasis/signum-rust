@@ -46,8 +46,11 @@ pub enum PeerMessage {
 struct Peer {
     receiver: mpsc::Receiver<RemotePeerMessage>,
     address: PeerAddress,
+    brs_version: Option<PeerVersion>,
     peer_info: Option<PeerInfo>,
     last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
+    data_transfer_stats: DataTransferStats,
+    blacklist_timestamp: Option<u64>, // If None, not blacklisted, else, time blacklist was issued
 }
 impl Peer {
     #[tracing::instrument(name = "Peer.new()")]
@@ -57,6 +60,9 @@ impl Peer {
             address,
             peer_info: None,
             last_contact: None,
+            brs_version: None,
+            data_transfer_stats: DataTransferStats::default(),
+            blacklist_timestamp: None,
         }
     }
 
@@ -64,6 +70,21 @@ impl Peer {
     fn handle_message(&mut self, msg: RemotePeerMessage) {
         todo!();
     }
+}
+
+#[derive(Debug)]
+pub struct PeerVersion {
+    major: isize,
+    minor: isize,
+    patch: isize,
+}
+
+#[derive(Debug, Default)]
+pub struct DataTransferStats {
+    total_bytes_downloaded_lifetime: u64,
+    total_bytes_uploaded_lifetime: u64,
+    total_bytes_downloaded_session: u64,
+    total_bytes_uploaded_session: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -144,6 +165,7 @@ impl PeerHandle {
     pub async fn get_peer_info() -> Option<PeerInfo> {
         todo!();
     }
+
 }
 
 async fn run_peer_actor(mut actor: Peer) {
