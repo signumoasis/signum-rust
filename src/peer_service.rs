@@ -22,7 +22,7 @@ struct PeerService {
     blacklisted_peer_cache: HashMap<PeerAddress, PeerHandle>,
 }
 impl PeerService {
-    #[tracing::instrument(name = "PeerServiceq.new()", skip(receiver))]
+    #[tracing::instrument(name = "PeerService.new()", skip(receiver))]
     pub fn new(receiver: mpsc::Receiver<PeerServiceMessage>) -> Self {
         //TODO: Get seed peers from config and load peers from database
         // simulate seed peer
