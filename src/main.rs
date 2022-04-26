@@ -3,37 +3,41 @@ use anyhow::Result;
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
     models::p2p::PeerAddress,
+    peer_service::PeerServiceHandle,
     telemetry::{get_subscriber, init_subscriber},
 };
+use tokio::time;
+use tracing::Level;
 
 #[tokio::main]
-#[tracing::instrument(name = "Main")]
 async fn main() -> Result<()> {
     // Begin by setting up tracing
     let subscriber = get_subscriber("signum-node-rs".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
-    tracing::info!("Started the program.");
+    // Create a default overall span
+    // let main_span = tracing::span!(Level::INFO, "MAIN");
+    // let _main_span_guard = main_span.enter();
 
     // DO STUFF BELOW HERE
+    interval_actor_demo().await;
 
     let addy = "http://p2p.signumoasis.xyz:80".parse::<PeerAddress>()?;
 
-    dbg!(addy);
-
+    tracing::debug!(address=?addy,"SIGNIFICANT EMOTIONAL EVENT");
 
     // DON'T DO MORE STUFF
     Ok(())
 }
 
-// async fn interval_actor_demo() {
-//     let peer = PeerServiceHandle::new();
+async fn interval_actor_demo() {
+    let peer = PeerServiceHandle::new();
 
-//     let mut interval = time::interval(time::Duration::from_secs(5));
-//     for _i in 0..30 {
-//         interval.tick().await;
-//     }
-// }
+    let mut interval = time::interval(time::Duration::from_secs(5));
+    for _i in 0..30 {
+        interval.tick().await;
+    }
+}
 
 // async fn run_peer_demo() -> Result<()> {
 //     let address = "http://p2p.signumoasis.xyz";
