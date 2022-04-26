@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use rand::prelude::IteratorRandom;
 use serde::Deserialize;
@@ -7,7 +7,10 @@ use tokio::{
     time,
 };
 
-use crate::{models::p2p::{PeerAddress, PeerInfo}, peer::PeerHandle};
+use crate::{
+    models::p2p::{PeerAddress, PeerInfo},
+    peer::PeerHandle,
+};
 
 pub const USER_AGENT: &str = "BRS/3.3.4";
 
@@ -81,9 +84,7 @@ impl PeerService {
         // 5. On success, report any PeerInfos to the PeerService, which will add them to datastore
 
         let local_cache = self.peers_cache.clone();
-        for p in local_cache.into_values() {
-
-        }
+        for p in local_cache.into_values() {}
 
         // tracing::debug!("PEERS CACHE - PRE-DISCOVERY\n{:?}", &self.peers_cache);
         // for (_, p) in self.peers_cache.clone().iter_mut() {
