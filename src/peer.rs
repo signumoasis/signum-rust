@@ -45,24 +45,17 @@ pub enum PeerMessage {
 #[derive(Debug)]
 struct Peer {
     receiver: mpsc::Receiver<RemotePeerMessage>,
-    address: PeerAddress,
-    brs_version: Option<PeerVersion>,
-    peer_info: Option<PeerInfo>,
-    last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
-    data_transfer_stats: DataTransferStats,
-    blacklist_timestamp: Option<u64>, // If None, not blacklisted, else, time blacklist was issued
+    state: PeerState,
 }
 impl Peer {
     #[tracing::instrument(name = "Peer.new()")]
     pub fn new(receiver: mpsc::Receiver<RemotePeerMessage>, address: PeerAddress) -> Self {
         Self {
             receiver,
-            address,
-            peer_info: None,
-            last_contact: None,
-            brs_version: None,
-            data_transfer_stats: DataTransferStats::default(),
-            blacklist_timestamp: None,
+            state: PeerState {
+                address,
+                ..Default::default()
+            },
         }
     }
 
@@ -72,11 +65,72 @@ impl Peer {
     }
 }
 
-#[derive(Debug)]
-pub struct PeerVersion {
-    major: isize,
-    minor: isize,
-    patch: isize,
+#[derive(Debug, Default)]
+pub struct PeerState {
+    address: PeerAddress,
+    blacklist_timestamp: Option<u64>, // If None, not blacklisted, else, time blacklist was issued
+    brs_version: Option<String>,
+    data_transfer_stats: DataTransferStats,
+    last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
+    peer_info: Option<PeerInfo>,
+}
+impl<'a, R: sqlx::Row> sqlx::FromRow<'a, R> for PeerState
+where
+    &'a str: sqlx::ColumnIndex<R>,
+    u64: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
+    String: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
+    bool: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
+{
+    fn from_row(row: &'a R) -> sqlx::Result<Self> {
+        let address: PeerAddress = row.try_get("address")?;
+        let blacklist_timestamp: Option<u64> = row.try_get("blacklist_timestamp")?;
+        let brs_version: Option<String> = row.try_get("brs_version")?;
+        let last_contact: Option<u64> = row.try_get("last_contact")?;
+
+        let data_transfer_stats: DataTransferStats = {
+            let total_bytes_downloaded_lifetime: u64 =
+                row.try_get("dts@total_bytes_downloaded_lifetime")?;
+            let total_bytes_uploaded_lifetime: u64 =
+                row.try_get("dts@total_bytes_uploaded_lifetime")?;
+            let total_bytes_downloaded_session: u64 =
+                row.try_get("dts@total_bytes_downloaded_session")?;
+            let total_bytes_uploaded_session: u64 =
+                row.try_get("dts@total_bytes_uploaded_session")?;
+            DataTransferStats {
+                total_bytes_downloaded_lifetime,
+                total_bytes_uploaded_lifetime,
+                total_bytes_downloaded_session,
+                total_bytes_uploaded_session,
+            }
+        };
+
+        //TODO: Investigate how to not store anything or query anything if fields are empty
+        // and make this a None
+        let peer_info: PeerInfo = {
+            let announced_address: Option<PeerAddress> =
+                row.try_get("peer_info@announced_address")?;
+            let application: String = row.try_get("peer_info@application")?;
+            let version: String = row.try_get("peer_info@version")?;
+            let platform: Option<String> = row.try_get("peer_info@platform")?;
+            let share_address: bool = row.try_get("peer_info@share_address")?;
+            PeerInfo {
+                announced_address,
+                application,
+                version,
+                platform,
+                share_address,
+            }
+        };
+
+        Ok(PeerState {
+            address,
+            blacklist_timestamp,
+            brs_version,
+            data_transfer_stats,
+            last_contact,
+            peer_info: Some(peer_info),
+        })
+    }
 }
 
 #[derive(Debug, Default)]
@@ -165,7 +219,6 @@ impl PeerHandle {
     pub async fn get_peer_info() -> Option<PeerInfo> {
         todo!();
     }
-
 }
 
 async fn run_peer_actor(mut actor: Peer) {

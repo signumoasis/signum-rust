@@ -5,7 +5,7 @@ pub mod p2p {
     use serde::Deserialize;
     use serde_with::DeserializeFromStr;
 
-    #[derive(Debug, Deserialize)]
+    #[derive(Debug, Default, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct PeerInfo {
         pub announced_address: Option<PeerAddress>,
@@ -15,7 +15,8 @@ pub mod p2p {
         pub share_address: bool,
     }
 
-    #[derive(Clone, Debug, DeserializeFromStr, Eq, Hash, PartialEq)]
+    #[derive(Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, sqlx::Type)]
+    #[sqlx(transparent)]
     pub struct PeerAddress(String);
     impl FromStr for PeerAddress {
         type Err = anyhow::Error;
