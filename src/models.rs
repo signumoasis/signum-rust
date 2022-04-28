@@ -1,9 +1,9 @@
 pub mod p2p {
-    use std::str::FromStr;
+    use std::{fmt::Display, str::FromStr};
 
     use reqwest::Url;
     use serde::Deserialize;
-    use serde_with::DeserializeFromStr;
+    use serde_with::{DeserializeFromStr, SerializeDisplay};
 
     #[derive(Debug, Default, Deserialize)]
     #[serde(rename_all = "camelCase")]
@@ -15,9 +15,17 @@ pub mod p2p {
         pub share_address: bool,
     }
 
-    #[derive(Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, sqlx::Type)]
+    #[derive(
+        Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, SerializeDisplay, sqlx::Type,
+    )]
     #[sqlx(transparent)]
     pub struct PeerAddress(String);
+
+    impl Display for PeerAddress {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
     impl FromStr for PeerAddress {
         type Err = anyhow::Error;
 

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
 use crate::models::p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction};
@@ -65,81 +66,17 @@ impl Peer {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct PeerState {
     address: PeerAddress,
     blacklist_timestamp: Option<u64>, // If None, not blacklisted, else, time blacklist was issued
     brs_version: Option<String>,
-    data_transfer_stats: DataTransferStats,
     last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
-    peer_info: Option<PeerInfo>,
-}
-impl<'a, R: sqlx::Row> sqlx::FromRow<'a, R> for PeerState
-where
-    &'a str: sqlx::ColumnIndex<R>,
-    u64: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
-    String: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
-    bool: sqlx::decode::Decode<'a, R::Database> + sqlx::types::Type<R::Database>,
-{
-    fn from_row(row: &'a R) -> sqlx::Result<Self> {
-        let address: PeerAddress = row.try_get("address")?;
-        let blacklist_timestamp: Option<u64> = row.try_get("blacklist_timestamp")?;
-        let brs_version: Option<String> = row.try_get("brs_version")?;
-        let last_contact: Option<u64> = row.try_get("last_contact")?;
-
-        let data_transfer_stats: DataTransferStats = {
-            let total_bytes_downloaded_lifetime: u64 =
-                row.try_get("dts@total_bytes_downloaded_lifetime")?;
-            let total_bytes_uploaded_lifetime: u64 =
-                row.try_get("dts@total_bytes_uploaded_lifetime")?;
-            let total_bytes_downloaded_session: u64 =
-                row.try_get("dts@total_bytes_downloaded_session")?;
-            let total_bytes_uploaded_session: u64 =
-                row.try_get("dts@total_bytes_uploaded_session")?;
-            DataTransferStats {
-                total_bytes_downloaded_lifetime,
-                total_bytes_uploaded_lifetime,
-                total_bytes_downloaded_session,
-                total_bytes_uploaded_session,
-            }
-        };
-
-        //TODO: Investigate how to not store anything or query anything if fields are empty
-        // and make this a None
-        let peer_info: PeerInfo = {
-            let announced_address: Option<PeerAddress> =
-                row.try_get("peer_info@announced_address")?;
-            let application: String = row.try_get("peer_info@application")?;
-            let version: String = row.try_get("peer_info@version")?;
-            let platform: Option<String> = row.try_get("peer_info@platform")?;
-            let share_address: bool = row.try_get("peer_info@share_address")?;
-            PeerInfo {
-                announced_address,
-                application,
-                version,
-                platform,
-                share_address,
-            }
-        };
-
-        Ok(PeerState {
-            address,
-            blacklist_timestamp,
-            brs_version,
-            data_transfer_stats,
-            last_contact,
-            peer_info: Some(peer_info),
-        })
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct DataTransferStats {
     total_bytes_downloaded_lifetime: u64,
     total_bytes_uploaded_lifetime: u64,
-    total_bytes_downloaded_session: u64,
-    total_bytes_uploaded_session: u64,
 }
+
+
 
 #[derive(Clone, Debug)]
 pub struct PeerHandle {
