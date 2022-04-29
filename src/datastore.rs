@@ -1,7 +1,7 @@
 use tokio::sync::oneshot;
 
 use crate::models::{
-    datastore::PeerState,
+    datastore::{Block, PeerState},
     p2p::{BlockId, PeerAddress},
 };
 
