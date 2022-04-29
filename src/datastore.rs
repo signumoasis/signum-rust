@@ -1,6 +1,9 @@
 use tokio::sync::oneshot;
 
-use crate::{models::p2p::PeerAddress, peer::PeerState};
+use crate::models::{
+    datastore::PeerState,
+    p2p::{BlockId, PeerAddress},
+};
 
 pub enum DatastoreMessage {
     GetBlock {

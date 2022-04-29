@@ -1,8 +1,10 @@
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
-use crate::models::p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction};
+use crate::models::{
+    datastore::PeerState,
+    p2p::{BlockId, ExchangeableBlock, PeerAddress, PeerInfo, Transaction},
+};
 
 /// Messages to send a request to the remote node this `[Peer]` represents.
 #[derive(Debug)]
@@ -64,16 +66,6 @@ impl Peer {
     fn handle_message(&mut self, msg: RemotePeerMessage) {
         todo!();
     }
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct PeerState {
-    address: PeerAddress,
-    blacklist_timestamp: Option<u64>, // If None, not blacklisted, else, time blacklist was issued
-    brs_version: Option<String>,
-    last_contact: Option<u64>, // unix timestamp or perhaps timestamp from signum epoch
-    total_bytes_downloaded_lifetime: u64,
-    total_bytes_uploaded_lifetime: u64,
 }
 
 #[derive(Clone, Debug)]
