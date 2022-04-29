@@ -76,8 +76,6 @@ pub struct PeerState {
     total_bytes_uploaded_lifetime: u64,
 }
 
-
-
 #[derive(Clone, Debug)]
 pub struct PeerHandle {
     sender: mpsc::Sender<RemotePeerMessage>,
