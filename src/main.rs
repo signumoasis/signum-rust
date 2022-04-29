@@ -7,7 +7,6 @@ use signum_node_rs::{
     telemetry::{get_subscriber, init_subscriber},
 };
 use tokio::time;
-use tracing::Level;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -31,7 +30,7 @@ async fn main() -> Result<()> {
 }
 
 async fn interval_actor_demo() {
-    let peer = PeerServiceHandle::new();
+    let _peer = PeerServiceHandle::new();
 
     let mut interval = time::interval(time::Duration::from_secs(5));
     for _i in 0..30 {

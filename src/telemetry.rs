@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use opentelemetry::sdk::{
-    export::trace::stdout,
-    trace::{self, Config, IdGenerator, Sampler},
-};
-use opentelemetry_otlp::{Protocol, WithExportConfig};
+use opentelemetry::sdk::trace::{self, IdGenerator, Sampler};
+use opentelemetry_otlp::WithExportConfig;
 use tracing::Subscriber;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;

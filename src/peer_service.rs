@@ -1,7 +1,6 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, time::Duration};
 
 use rand::prelude::IteratorRandom;
-use serde::Deserialize;
 use tokio::{
     sync::{mpsc, oneshot},
     time,
@@ -19,7 +18,7 @@ pub const USER_AGENT: &str = "BRS/3.3.4";
 struct PeerService {
     receiver: mpsc::Receiver<PeerServiceMessage>,
     peers_cache: HashMap<PeerAddress, PeerHandle>,
-    blacklisted_peer_cache: HashMap<PeerAddress, PeerHandle>,
+    _blacklisted_peer_cache: HashMap<PeerAddress, PeerHandle>,
 }
 impl PeerService {
     #[tracing::instrument(name = "PeerService.new()", skip(receiver))]
@@ -36,21 +35,21 @@ impl PeerService {
         //     share_address: true,
         // };
 
-        let mut initial_cache = HashMap::new();
+        let initial_cache = HashMap::new();
         // if let Some(peer_address) = &seed_peer.address {
         //     initial_cache.insert(peer_address.clone(), seed_peer);
         // }
         Self {
             receiver,
             peers_cache: initial_cache,
-            blacklisted_peer_cache: HashMap::<PeerAddress, PeerHandle>::new(),
+            _blacklisted_peer_cache: HashMap::<PeerAddress, PeerHandle>::new(),
         }
     }
 
     #[tracing::instrument(name = "PeerService.handle_message()", skip(self))]
     fn handle_message(&mut self, msg: PeerServiceMessage) {
         match msg {
-            PeerServiceMessage::AddPeer { respond_to } => todo!(),
+            PeerServiceMessage::AddPeer { respond_to: _ } => todo!(),
             PeerServiceMessage::GetRandomPeer { respond_to } => {
                 //TODO: Consider randomly selecting from the database?
                 match self.peers_cache.keys().choose(&mut rand::thread_rng()) {
@@ -84,7 +83,7 @@ impl PeerService {
         // 5. On success, report any PeerInfos to the PeerService, which will add them to datastore
 
         let local_cache = self.peers_cache.clone();
-        for p in local_cache.into_values() {}
+        for _p in local_cache.into_values() {}
 
         // tracing::debug!("PEERS CACHE - PRE-DISCOVERY\n{:?}", &self.peers_cache);
         // for (_, p) in self.peers_cache.clone().iter_mut() {

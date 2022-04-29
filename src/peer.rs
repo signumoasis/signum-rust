@@ -48,14 +48,14 @@ pub enum PeerMessage {
 #[derive(Debug)]
 struct Peer {
     receiver: mpsc::Receiver<RemotePeerMessage>,
-    state: PeerState,
+    _state: PeerState,
 }
 impl Peer {
     #[tracing::instrument(name = "Peer.new()")]
     pub fn new(receiver: mpsc::Receiver<RemotePeerMessage>, address: PeerAddress) -> Self {
         Self {
             receiver,
-            state: PeerState {
+            _state: PeerState {
                 address,
                 ..Default::default()
             },
@@ -70,7 +70,7 @@ impl Peer {
 
 #[derive(Clone, Debug)]
 pub struct PeerHandle {
-    sender: mpsc::Sender<RemotePeerMessage>,
+    _sender: mpsc::Sender<RemotePeerMessage>,
 }
 impl PeerHandle {
     #[tracing::instrument(name = "PeerHandle.new()")]
@@ -79,7 +79,7 @@ impl PeerHandle {
         let actor = Peer::new(receiver, address);
         tokio::spawn(run_peer_actor(actor));
 
-        Self { sender }
+        Self { _sender: sender }
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
@@ -139,7 +139,7 @@ impl PeerHandle {
         todo!();
     }
 
-    pub async fn set_peer_info(info: PeerInfo) {
+    pub async fn set_peer_info(_info: PeerInfo) {
         todo!();
     }
 
