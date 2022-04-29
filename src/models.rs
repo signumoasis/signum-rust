@@ -19,7 +19,7 @@ pub mod p2p {
         Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, SerializeDisplay, sqlx::Type,
     )]
     #[sqlx(transparent)]
-    pub struct PeerAddress(String);
+    pub struct PeerAddress(pub(crate) String);
 
     impl Display for PeerAddress {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -58,4 +58,50 @@ pub mod p2p {
 
     #[derive(Debug)]
     pub struct ExchangeableBlock;
+}
+
+#[cfg(test)]
+mod test {
+    use crate::models::p2p::PeerAddress;
+
+    #[test]
+    fn peer_address_fromstr_succeeds_for_valid_urls() {
+        // Prepare
+        let example_443 = PeerAddress("p2p.signumoasis.xyz:443".to_string());
+        let example_80 = PeerAddress("p2p.signumoasis.xyz:80".to_string());
+        let example_8123 = PeerAddress("p2p.signumoasis.xyz:8123".to_string());
+        let example_ipv4 = PeerAddress("127.0.0.1:8123".to_string());
+        let example_ipv6 = PeerAddress("[::1]:8123".to_string());
+        let urls = vec![
+            ("https://p2p.signumoasis.xyz".to_string(), &example_8123),
+            ("http://p2p.signumoasis.xyz".to_string(), &example_8123),
+            ("https://p2p.signumoasis.xyz:443".to_string(), &example_443),
+            ("http://p2p.signumoasis.xyz:80".to_string(), &example_80),
+            ("p2p.signumoasis.xyz".to_string(), &example_8123),
+            ("p2p.signumoasis.xyz:80".to_string(), &example_80),
+            ("127.0.0.1".to_string(), &example_ipv4),
+            ("127.0.0.1:8123".to_string(), &example_ipv4),
+            ("[::1]".to_string(), &example_ipv6),
+            ("[::1]:8123".to_string(), &example_ipv6),
+        ];
+
+        // Act / Assert
+        for (u, e) in urls.into_iter() {
+            assert_eq!(u.parse::<PeerAddress>().unwrap(), *e, "Failed on `{}`", u);
+        }
+    }
+
+    #[test]
+    fn peer_address_fromstr_fails_for_invalid_urls() {
+        // Prepare
+        let urls = vec![
+            "[:::1]".to_string(),
+            "[:::1]:8123".to_string(),
+        ];
+
+        // Act / Assert
+        for u in urls.into_iter() {
+            u.parse::<PeerAddress>().unwrap_err();
+        }
+    }
 }
