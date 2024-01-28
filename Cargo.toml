@@ -1,0 +1,5 @@
+[workspace]
+members = ["signum-cli", "signum-node-rs", "signum-rs"]
+default-members = ["signum-cli"]
+
+resolver = "2"
