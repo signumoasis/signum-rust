@@ -1,3 +1,4 @@
+
 #[derive(serde::Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetMyPeerInfoResponse {
