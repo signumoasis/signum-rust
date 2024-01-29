@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use signum_rs::api::network::PeerStates as SignumPeerStates;
-use signum_rs::api::network::{get_my_info, get_my_peer_info, get_peers};
+use signum_rs::old_api::network::PeerStates as SignumPeerStates;
+use signum_rs::old_api::network::{get_my_info, get_my_peer_info, get_peers};
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
