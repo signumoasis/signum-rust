@@ -9,14 +9,11 @@ use anyhow::{Context, Result};
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
     get_peer_info, get_peers,
-    models::p2p::{PeerAddress, PeerInfo},
+    models::p2p::PeerAddress,
     peer_service::PeerServiceHandle,
     telemetry::{get_subscriber, init_subscriber},
 };
-use tokio::{
-    task::{JoinError, JoinHandle},
-    time,
-};
+use tokio::{task::JoinError, time};
 
 #[tokio::main]
 async fn main() -> Result<()> {
