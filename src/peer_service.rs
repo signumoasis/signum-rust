@@ -11,7 +11,7 @@ use crate::{
     peer::PeerHandle,
 };
 
-pub const USER_AGENT: &str = "BRS/3.3.4";
+pub const USER_AGENT: &str = "BRS/3.8.0";
 
 /// The PeerService discovers, manages, and blacklists peers.
 /// It also returns peers to be used by other services.
