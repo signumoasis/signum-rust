@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
     str::FromStr,
-    time::Duration,
 };
 
 use anyhow::{Context, Result};
@@ -26,7 +25,6 @@ async fn main() -> Result<()> {
 #[tracing::instrument]
 async fn start() -> Result<()> {
     let interval_task = tokio::spawn(interval_actor_demo());
-    // let peer_task = tokio::spawn(run_peer_demo());
     let peer_task = tokio::spawn(get_peers_task());
 
     tokio::select! {
@@ -34,11 +32,6 @@ async fn start() -> Result<()> {
         o = peer_task => report_exit("Peer Task", o),
     };
 
-    // let addy = "http://p2p.signumoasis.xyz:80".parse::<PeerAddress>()?;
-
-    // tracing::debug!(address=?addy,"SIGNIFICANT EMOTIONAL EVENT");
-
-    // DON'T DO MORE STUFF
     Ok(())
 }
 
@@ -113,35 +106,4 @@ async fn interval_actor_demo() -> Result<()> {
     }
 
     Ok(())
-}
-
-async fn run_peer_demo() -> Result<()> {
-    use std::collections::HashMap;
-
-    let address = "http://p2p.signumoasis.xyz";
-
-    let mut thebody = HashMap::new();
-    thebody.insert("protocol", "B1");
-    thebody.insert("requestType", "getPeers");
-
-    let peer_request = reqwest::Client::new()
-        .post(address)
-        .header("User-Agent", "BRS/3.8.0")
-        .json(&thebody)
-        .send()
-        .await?;
-
-    tracing::debug!("Parsing peers");
-    #[derive(Debug, serde::Deserialize)]
-    struct PeerContainer {
-        #[serde(rename = "peers")]
-        _peers: Vec<PeerAddress>,
-    }
-    let peers = peer_request.json::<PeerContainer>().await?;
-    tracing::debug!("{:#?}", &peers);
-
-    loop {
-        tokio::time::sleep(Duration::from_secs(1)).await;
-    }
-    // Ok(())
 }
