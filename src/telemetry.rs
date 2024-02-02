@@ -22,7 +22,7 @@ where
         .compact()
         .with_target(true)
         .with_line_number(true)
-        .with_span_events(FmtSpan::ACTIVE)
+        .with_span_events(FmtSpan::NONE)
         .with_writer(sink);
 
     tracing_subscriber::registry()
