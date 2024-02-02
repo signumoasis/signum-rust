@@ -9,8 +9,8 @@ use crate::models::{
 /// Messages to send a request to the remote node this `[Peer]` represents.
 #[derive(Debug)]
 pub enum RemotePeerMessage {
-    GetPeers {
-        respond_to: oneshot::Sender<Vec<PeerAddress>>,
+    AddPeers {
+        respond_to: oneshot::Sender<Result<()>>,
     },
     GetInfo {
         respond_to: oneshot::Sender<PeerInfo>,
@@ -21,11 +21,8 @@ pub enum RemotePeerMessage {
     GetNextBlockIds {
         respond_to: oneshot::Sender<Vec<BlockId>>,
     },
-    UnconfirmedTransactions {
-        respond_to: oneshot::Sender<Vec<Transaction>>,
-    },
-    AddPeers {
-        respond_to: oneshot::Sender<Result<()>>,
+    GetPeers {
+        respond_to: oneshot::Sender<Vec<PeerAddress>>,
     },
     ProcessBlock {
         respond_to: oneshot::Sender<Result<()>>,
@@ -33,15 +30,18 @@ pub enum RemotePeerMessage {
     ProcessTransactions {
         respond_to: oneshot::Sender<Result<()>>,
     },
+    UnconfirmedTransactions {
+        respond_to: oneshot::Sender<Vec<Transaction>>,
+    },
 }
 
 #[derive(Debug)]
 pub enum PeerMessage {
-    SetPeerInfo {
-        respond_to: oneshot::Sender<Result<()>>,
-    },
     GetPeerInfo {
         respond_to: oneshot::Sender<Option<PeerInfo>>,
+    },
+    SetPeerInfo {
+        respond_to: oneshot::Sender<Result<()>>,
     },
 }
 
@@ -83,9 +83,9 @@ impl PeerHandle {
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
-    /// get its list of peers.
-    #[tracing::instrument(name = "PeerHandle.get_peers()")]
-    pub async fn call_get_peers(&self) -> Result<Vec<PeerAddress>> {
+    /// request that it add a supplied peer.
+    #[tracing::instrument(name = "PeerHandle.add_peers()")]
+    pub async fn call_add_peers(&self, peer: PeerInfo) -> Result<()> {
         todo!();
     }
 
@@ -112,16 +112,9 @@ impl PeerHandle {
     }
 
     /// Instructs the `[Peer]` to contact the remote node and
-    /// request all unconfirmed transactions.
-    #[tracing::instrument(name = "PeerHandle.unconfirmed_transactions()")]
-    pub async fn call_get_unconfirmed_transactions(&self) -> Result<Vec<Transaction>> {
-        todo!();
-    }
-
-    /// Instructs the `[Peer]` to contact the remote node and
-    /// request that it add a supplied peer.
-    #[tracing::instrument(name = "PeerHandle.add_peers()")]
-    pub async fn call_add_peers(&self, peer: PeerInfo) -> Result<()> {
+    /// get its list of peers.
+    #[tracing::instrument(name = "PeerHandle.get_peers()")]
+    pub async fn call_get_peers(&self) -> Result<Vec<PeerAddress>> {
         todo!();
     }
 
@@ -136,6 +129,13 @@ impl PeerHandle {
     /// request that it process a supplied list of transactions.
     #[tracing::instrument(name = "PeerHandle.new()")]
     pub async fn call_process_transactions(&self, transactions: Vec<Transaction>) -> Result<()> {
+        todo!();
+    }
+
+    /// Instructs the `[Peer]` to contact the remote node and
+    /// request all unconfirmed transactions.
+    #[tracing::instrument(name = "PeerHandle.unconfirmed_transactions()")]
+    pub async fn call_get_unconfirmed_transactions(&self) -> Result<Vec<Transaction>> {
         todo!();
     }
 
