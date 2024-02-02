@@ -110,7 +110,7 @@ pub struct PeerServiceHandle {
     sender: mpsc::Sender<PeerServiceMessage>,
 }
 impl PeerServiceHandle {
-    #[tracing::instrument(name = "PeerServiceHandle.new()")]
+    #[tracing::instrument]
     pub fn new() -> Self {
         let (sender, receiver) = mpsc::channel(8);
         let actor = PeerService::new(receiver);
