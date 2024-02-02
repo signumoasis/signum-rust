@@ -8,6 +8,10 @@ default:
 build:
     cargo build
 
+# run the program with bunyan tracing
+bunyan:
+    cargo run --features=bunyan | bunyan
+
 # build the program for release
 release:
     cargo build --release
@@ -16,10 +20,9 @@ release:
 run:
     cargo run
 
-# run the program with bunyan tracing
-bunyan:
-    cargo run --features=bunyan | bunyan
-
+# run cargo nextest
+test:
+    cargo nextest run
 # cargo watch with default tracing (tracing-subscriber)
 watch:
     cargo watch -x check -x "run"
