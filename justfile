@@ -19,3 +19,11 @@ run:
 # run the program with bunyan tracing
 bunyan:
     cargo run --features=bunyan | bunyan
+
+# cargo watch with default tracing (tracing-subscriber)
+watch:
+    cargo watch -x check -x "run"
+
+# cargo watch with bunyan tracing
+watch-bunyan:
+    cargo watch -x check -x "run --features=bunyan | bunyan"
