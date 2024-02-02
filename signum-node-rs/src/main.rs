@@ -103,5 +103,5 @@ async fn run_peer_demo() -> Result<()> {
     loop {
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-    Ok(())
+    // Ok(())
 }
