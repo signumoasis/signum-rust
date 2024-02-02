@@ -1,3 +1,8 @@
+use std::{
+    fmt::{Debug, Display},
+    time::Duration,
+};
+
 use anyhow::Result;
 
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
@@ -6,109 +11,97 @@ use signum_node_rs::{
     peer_service::PeerServiceHandle,
     telemetry::{get_subscriber, init_subscriber},
 };
-use tokio::time;
+use tokio::{task::JoinError, time};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Begin by setting up tracing
     let subscriber = get_subscriber("signum-node-rs".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
+    start().await
+}
 
-    // Create a default overall span
-    // let main_span = tracing::span!(Level::INFO, "MAIN");
-    // let _main_span_guard = main_span.enter();
+#[tracing::instrument]
+async fn start() -> Result<()> {
+    let interval_task = tokio::spawn(interval_actor_demo());
+    let peer_task = tokio::spawn(run_peer_demo());
 
-    // DO STUFF BELOW HERE
-    interval_actor_demo().await;
+    tokio::select! {
+        o = interval_task => report_exit("Interval Task", o),
+        o = peer_task => report_exit("Peer Task", o),
+    };
 
-    let addy = "http://p2p.signumoasis.xyz:80".parse::<PeerAddress>()?;
+    // let addy = "http://p2p.signumoasis.xyz:80".parse::<PeerAddress>()?;
 
-    tracing::debug!(address=?addy,"SIGNIFICANT EMOTIONAL EVENT");
+    // tracing::debug!(address=?addy,"SIGNIFICANT EMOTIONAL EVENT");
 
     // DON'T DO MORE STUFF
     Ok(())
 }
 
-async fn interval_actor_demo() {
-    let _peer = PeerServiceHandle::new();
-
-    let mut interval = time::interval(time::Duration::from_secs(5));
-    for _i in 0..30 {
-        interval.tick().await;
+fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>, JoinError>) {
+    match outcome {
+        Ok(Ok(())) => {
+            tracing::info!("{} has exited", task_name)
+        }
+        Ok(Err(e)) => {
+            tracing::error!(
+                error.cause_chain = ?e,
+                error.message = %e,
+                "{} failed",
+                task_name
+            )
+        }
+        Err(e) => {
+            tracing::error!(
+                error.cause_chain = ?e,
+                error.message = %e,
+                "{} task failed to complete",
+                task_name
+            )
+        }
     }
 }
 
-// async fn run_peer_demo() -> Result<()> {
-//     let address = "http://p2p.signumoasis.xyz";
+async fn interval_actor_demo() -> Result<()> {
+    let _peer = PeerServiceHandle::new();
 
-//     let mut thebody = HashMap::new();
-//     thebody.insert("protocol", "B1");
-//     thebody.insert("requestType", "getPeers");
+    let mut interval = time::interval(time::Duration::from_secs(1));
+    for _i in 0..10 {
+        tracing::debug!("Interval Tick");
+        interval.tick().await;
+    }
 
-//     let peer_request = reqwest::Client::new()
-//         .post(address)
-//         .header("User-Agent", "BRS/3.3.4")
-//         .json(&thebody)
-//         .send()
-//         .await?;
+    Ok(())
+}
 
-//     let peers = peer_request.json::<PeerContainer>().await?.peers;
+async fn run_peer_demo() -> Result<()> {
+    use std::collections::HashMap;
 
-//     let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+    let address = "http://p2p.signumoasis.xyz";
 
-//     for p in peers {
-//         let tx = tx.clone();
-//         // Get each peer's peerinfo
-//         //TODO: move this getInfo call into the Peer impl on a function
-//         tokio::spawn(async move {
-//             // let p = PeerAddress("p2p.signumoasis.xyz".to_string());
-//             let mut peer_req_body = HashMap::new();
-//             peer_req_body.insert("protocol", "B1");
-//             peer_req_body.insert("requestType", "getInfo");
+    let mut thebody = HashMap::new();
+    thebody.insert("protocol", "B1");
+    thebody.insert("requestType", "getPeers");
 
-//             let port = if p.0.split(':').count() >= 2 {
-//                 ""
-//             } else {
-//                 ":8123"
-//             };
-//             let addy = format!("http://{}{}", p.0.clone(), port);
+    let peer_request = reqwest::Client::new()
+        .post(address)
+        .header("User-Agent", "BRS/3.8.0")
+        .json(&thebody)
+        .send()
+        .await?;
 
-//             tracing::debug!("Checking `{}`", p.0.clone());
-//             let info = reqwest::Client::new()
-//                 .post(addy)
-//                 .header("User-Agent", "BRS/3.3.4")
-//                 .json(&peer_req_body)
-//                 .send()
-//                 .await;
+    tracing::debug!("Parsing peers");
+    #[derive(Debug, serde::Deserialize)]
+    struct PeerContainer {
+        #[serde(rename = "peers")]
+        _peers: Vec<PeerAddress>,
+    }
+    let peers = peer_request.json::<PeerContainer>().await?;
+    tracing::debug!("{:#?}", &peers);
 
-//             tracing::debug!("Received from `{}`. Deserializing", p.0.clone());
-//             let peer = match info {
-//                 Ok(r) => match r.json::<Peer>().await {
-//                     Ok(r) => r,
-//                     Err(e) => {
-//                         tracing::warn!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
-//                         panic!("IT BROKE!")
-//                     }
-//                 },
-//                 Err(e) => {
-//                     tracing::warn!("WARNING: Bad peer: {:#?}\n\nError: {}", p.0, e);
-//                     panic!("IT BROKE!")
-//                 }
-//             };
-//             tracing::debug!(
-//                 "Deserialized `{}`. Sending answer to main thread",
-//                 p.0.clone()
-//             );
-//             tx.send(peer).await
-//         });
-//     }
-//     drop(tx);
-
-//     let mut all_peers = Vec::new();
-//     while let Some(message) = rx.recv().await {
-//         all_peers.push(message);
-//     }
-
-//     dbg!(all_peers);
-//     Ok(())
-// }
+    loop {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    Ok(())
+}
