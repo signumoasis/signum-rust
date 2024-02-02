@@ -1,5 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
+use anyhow::Context;
 use reqwest::Url;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
@@ -9,6 +10,13 @@ use serde_with::{DeserializeFromStr, SerializeDisplay};
 #[sqlx(transparent)]
 pub struct PeerAddress(pub(crate) String);
 
+impl PeerAddress {
+    pub fn to_url(&self) -> Url {
+        Url::parse(format!("http://{}", &self.0).as_str())
+            .context("Couldn't parse url")
+            .unwrap()
+    }
+}
 impl Display for PeerAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
