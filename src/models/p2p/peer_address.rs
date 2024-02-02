@@ -17,7 +17,7 @@ impl Display for PeerAddress {
 impl FromStr for PeerAddress {
     type Err = anyhow::Error;
 
-    #[tracing::instrument(name = "models::P2P::PeerAddress.try_from()")]
+    #[tracing::instrument]
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         // Remove any existing scheme by splitting on "://" if it exists and only taking the right half
         // or taking the base value if no "://" exists
