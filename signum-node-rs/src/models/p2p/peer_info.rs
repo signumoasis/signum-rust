@@ -10,4 +10,5 @@ pub struct PeerInfo {
     pub version: String,
     pub platform: Option<String>,
     pub share_address: bool,
+    pub network_name: String,
 }
