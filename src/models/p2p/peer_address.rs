@@ -17,7 +17,7 @@ impl Display for PeerAddress {
 impl FromStr for PeerAddress {
     type Err = anyhow::Error;
 
-    #[tracing::instrument]
+    #[tracing::instrument(name = "Parsing Peer Address")]
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         // Remove any existing scheme by splitting on "://" if it exists and only taking the right half
         // or taking the base value if no "://" exists
@@ -34,6 +34,7 @@ impl FromStr for PeerAddress {
         let port = url.port().unwrap_or(8123);
 
         let address = format!("{}:{}", host, port);
+        tracing::trace!("Parsed: {}", &address);
         Ok(PeerAddress(address))
     }
 }
