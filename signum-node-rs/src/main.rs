@@ -69,6 +69,19 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
     }
 }
 
+/// Gets a node's peers, then loops them all and gets a PeerInfo for each one
+///
+/// Example of a possible way to handle peer management.
+/// There would likely be several worker tasks set up. This one would be split in two:
+/// One to get all the peers for a peer
+///     - checks if a peer exists in db and only writes if its new
+/// Second to get a peerinfo for each peer that doesn't have it set or it's older than x seconds
+///     - checks last update time, only updating if null or too old
+///     - writes result to db if successful, otherwise just quits with error logged
+/// These could possibly both be child tasks of a manager task
+///
+/// Need to figure out how to respawn manager task instead of quitting program after
+/// a single tasks exits
 async fn get_peers_task() -> Result<()> {
     let addy = PeerAddress::from_str("http://p2p.signumoasis.xyz:80")
         .context("Couldn't parse peer address")?;
@@ -81,6 +94,8 @@ async fn get_peers_task() -> Result<()> {
         tasks.push(tokio::spawn(get_peer_info(peer)));
     }
 
+    // handles not necessary in final task. Fire and forget. Each task can write its update to db
+    // directly instead of going through a manager. db is source of truth and cache
     let mut results = Vec::with_capacity(tasks.len());
     for handle in tasks {
         results.push(handle.await.unwrap());
