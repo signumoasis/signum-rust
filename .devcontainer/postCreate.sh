@@ -13,7 +13,7 @@ cargo --color never binstall  -y cargo-edit cargo-watch cargo-expand cargo-deny 
 
 cargo --color never binstall -y bunyan
 
-cargo --color never install sqlx-cli --no-default-features --features rustls,postgres
+cargo --color never install sqlx-cli --no-default-features --features rustls,sqlite,postgres
 
 
 #sqlx migrate run
