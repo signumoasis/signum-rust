@@ -8,7 +8,8 @@
 		"ghcr.io/flexwie/devcontainer-features/op:1": {},
 		"git": "os-provided",
 		"github-cli": "latest",
-		"docker-from-docker": "latest"
+		"docker-from-docker": "latest",
+		"node": "latest"
 	},
 	"customizations": {
 		"vscode": {
@@ -27,7 +28,8 @@
 				"serayuzgur.crates",
 				"tamasfe.even-better-toml",
 				"usernamehw.errorlens",
-				"vscode-icons-team.vscode-icons"
+				"vscode-icons-team.vscode-icons",
+				"mtxr.sqltools-driver-sqlite"
 			]
 		}
 	},
