@@ -8,7 +8,8 @@
 		"ghcr.io/flexwie/devcontainer-features/op:1": {},
 		"git": "os-provided",
 		"github-cli": "latest",
-		"docker-from-docker": "latest"
+		"docker-from-docker": "latest",
+		"ghcr.io/warrenbuckley/codespace-features/sqlite": "latest"
 	},
 	"customizations": {
 		"vscode": {
