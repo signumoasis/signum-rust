@@ -107,6 +107,4 @@ async fn interval_actor_demo() -> Result<()> {
         tracing::debug!("Interval Tick");
         interval.tick().await;
     }
-
-    Ok(())
 }
