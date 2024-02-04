@@ -1,4 +1,3 @@
-use config::ConfigBuilder;
 use serde::Deserialize;
 
 use crate::models::p2p::PeerAddress;
@@ -10,7 +9,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let configuration_file = "configuration.yml";
 
     let settings = config::Config::builder()
-        .add_defaults()?
+        // .add_defaults()?
         //add values from a file
         .add_source(config::File::from(base_path.join(configuration_file)))
         .build()?;
@@ -26,14 +25,14 @@ trait ConfigBuilderExtensions {
         Self: Sized;
 }
 
-impl<St: config::builder::BuilderState> ConfigBuilderExtensions for ConfigBuilder<St> {
-    fn add_defaults(self) -> Result<Self, config::ConfigError> {
-        self.set_default(
-            "settings.p2p.bootstrap_peers",
-            "us-east.signum.network:8123".to_string(),
-        )
-    }
-}
+// impl<St: config::builder::BuilderState> ConfigBuilderExtensions for ConfigBuilder<St> {
+//     fn add_defaults(self) -> Result<Self, config::ConfigError> {
+//         self.set_default(
+//             "settings.p2p.bootstrap_peers",
+//             vec![PeerAddress::from_str("us-east.signum.network:8123")?],
+//         )
+//     }
+// }
 
 /// Settings for the node.
 #[derive(Clone, Debug, Deserialize)]
