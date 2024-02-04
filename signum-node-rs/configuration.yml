@@ -1,2 +1,3 @@
 p2p:
-  test: "blar"
+  bootstrap_peers:
+    - "p2p.signumoasis.xyz:80"
