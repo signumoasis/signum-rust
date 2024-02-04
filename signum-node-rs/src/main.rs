@@ -7,7 +7,11 @@ use anyhow::{Context, Result};
 
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
-    configuration::get_configuration, get_peer_info, get_peers, models::p2p::PeerAddress, telemetry::{get_subscriber, init_subscriber}
+    configuration::get_configuration,
+    get_peer_info, get_peers,
+    models::p2p::PeerAddress,
+    telemetry::{get_subscriber, init_subscriber},
+    workers::peer_finder::peer_finder,
 };
 use tokio::{task::JoinError, time};
 
@@ -21,13 +25,16 @@ async fn main() -> Result<()> {
 
 #[tracing::instrument]
 async fn start() -> Result<()> {
-    let _configuration = get_configuration().expect("Couldn't get the configuration. Unable to continue");
-    let interval_task = tokio::spawn(interval_actor_demo());
-    let peer_task = tokio::spawn(get_peers_task());
+    let configuration =
+        get_configuration().expect("Couldn't get the configuration. Unable to continue");
+    // let interval_task = tokio::spawn(interval_actor_demo());
+    // let peer_task = tokio::spawn(get_peers_task());
+    let peer_finder_task = tokio::spawn(peer_finder(configuration));
 
     tokio::select! {
-        o = interval_task => report_exit("Interval Task", o),
-        o = peer_task => report_exit("Peer Task", o),
+        o = peer_finder_task => report_exit("Peer Finder", o),
+        // o = interval_task => report_exit("Interval Task", o),
+        // o = peer_task => report_exit("Peer Task", o),
     };
 
     Ok(())
@@ -75,7 +82,7 @@ async fn get_peers_task() -> Result<()> {
         .context("Couldn't parse peer address")?;
     tracing::debug!("Downloading peers from {}", addy);
     let r = get_peers(addy).await?;
-    tracing::debug!("Peers downloaded: {:#?}", r);
+    tracing::debug!("Peers downloaded: {:#?}", r.len());
     let mut tasks = Vec::new();
 
     for peer in r.into_iter() {
@@ -89,14 +96,14 @@ async fn get_peers_task() -> Result<()> {
         results.push(handle.await.unwrap());
     }
 
-    tracing::debug!("{:#?}", results);
+    tracing::debug!("{:?}", results);
 
     Ok(())
 }
 
 async fn interval_actor_demo() -> Result<()> {
-    let mut interval = time::interval(time::Duration::from_secs(1));
-    for _i in 0..10 {
+    let mut interval = time::interval(time::Duration::from_secs(10));
+    loop {
         tracing::debug!("Interval Tick");
         interval.tick().await;
     }
