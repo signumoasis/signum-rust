@@ -11,6 +11,7 @@ use serde_with::{DeserializeFromStr, SerializeDisplay};
 pub struct PeerAddress(pub(crate) String);
 
 impl PeerAddress {
+    #[tracing::instrument(name = "PeerAddress:to_url")]
     pub fn to_url(&self) -> Url {
         Url::parse(format!("http://{}", &self.0).as_str())
             .context("Couldn't parse url")
@@ -25,7 +26,7 @@ impl Display for PeerAddress {
 impl FromStr for PeerAddress {
     type Err = anyhow::Error;
 
-    #[tracing::instrument(name = "Parsing Peer Address")]
+    #[tracing::instrument(name = "PeerAddress::from_str")]
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         // Remove any existing scheme by splitting on "://" if it exists and only taking the right half
         // or taking the base value if no "://" exists
