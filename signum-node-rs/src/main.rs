@@ -7,9 +7,7 @@ use anyhow::{Context, Result};
 
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
-    get_peer_info, get_peers,
-    models::p2p::PeerAddress,
-    telemetry::{get_subscriber, init_subscriber},
+    configuration::get_configuration, get_peer_info, get_peers, models::p2p::PeerAddress, telemetry::{get_subscriber, init_subscriber}
 };
 use tokio::{task::JoinError, time};
 
@@ -23,6 +21,7 @@ async fn main() -> Result<()> {
 
 #[tracing::instrument]
 async fn start() -> Result<()> {
+    let _configuration = get_configuration().expect("Couldn't get the configuration. Unable to continue");
     let interval_task = tokio::spawn(interval_actor_demo());
     let peer_task = tokio::spawn(get_peers_task());
 

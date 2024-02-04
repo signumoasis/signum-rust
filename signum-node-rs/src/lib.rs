@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use models::p2p::{PeerAddress, PeerInfo};
 
+pub mod configuration;
 pub mod models;
 pub mod telemetry;
 pub mod workers;
