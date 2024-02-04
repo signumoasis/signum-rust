@@ -1,6 +1,6 @@
 -- Add up migration script here
 CREATE TABLE IF NOT EXISTS peers (
-    peer_address TEXT PRIMARY KEY,
+    peer_address TEXT PRIMARY KEY NOT NULL,
     application TEXT,
     version TEXT,
     platform TEXT,
