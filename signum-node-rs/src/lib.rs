@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use models::p2p::{PeerAddress, PeerInfo};
 
-pub mod datastore;
 pub mod models;
-pub mod peer;
-pub mod peer_service;
 pub mod telemetry;
 
 pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {

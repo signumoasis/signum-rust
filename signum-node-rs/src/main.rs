@@ -9,7 +9,6 @@ use anyhow::{Context, Result};
 use signum_node_rs::{
     get_peer_info, get_peers,
     models::p2p::PeerAddress,
-    peer_service::PeerServiceHandle,
     telemetry::{get_subscriber, init_subscriber},
 };
 use tokio::{task::JoinError, time};
@@ -97,8 +96,6 @@ async fn get_peers_task() -> Result<()> {
 }
 
 async fn interval_actor_demo() -> Result<()> {
-    let _peer = PeerServiceHandle::new();
-
     let mut interval = time::interval(time::Duration::from_secs(1));
     for _i in 0..10 {
         tracing::debug!("Interval Tick");
