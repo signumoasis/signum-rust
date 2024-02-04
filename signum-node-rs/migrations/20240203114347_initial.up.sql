@@ -5,5 +5,7 @@ CREATE TABLE IF NOT EXISTS peers (
     version TEXT,
     platform TEXT,
     share_address BOOLEAN,
-    network TEXT
+    network TEXT,
+    blacklist_until DATETIME,
+    blacklist_count INTEGER
 );
