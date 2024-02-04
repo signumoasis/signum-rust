@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::Result;
+use rand::seq::SliceRandom;
 
 use crate::{configuration::Settings, get_db_pool, models::p2p::PeerAddress};
 
@@ -24,13 +25,32 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
     .fetch_optional(&mut *transaction)
     .await?;
 
-    if let Some(r) = row {
-        let peer = PeerAddress::from_str(r.peer_address.as_str())?;
-        tracing::debug!("Randomly chosen peer is {:#?}", peer);
+    // Check if we were able to get a row
+    let x = if let Some(r) = row {
+        PeerAddress::from_str(r.peer_address.as_str())
     } else {
-        tracing::debug!("No available peers in the database. Trying the bootstrap list.");
-    }
+        let err = anyhow::anyhow!("No valid peers available in the database.");
+        tracing::debug!("Couldn't get peer from database: {}", err);
+        Err(err)
+    };
 
+    // Check if we got a row AND were able to parse it
+    let peer = if let Ok(peer_address) = x {
+        // Use address from database
+        peer_address
+    } else {
+        // Try address from bootstrap
+        let peer = settings
+            .p2p
+            .bootstrap_peers
+            // TODO: Make this selection random
+            .get(0)
+            .ok_or_else(|| anyhow::anyhow!("Unable to get peer"))?;
+        tracing::debug!("Trying the bootstrap list.");
+        peer.to_owned()
+    };
+
+    tracing::debug!("Randomly chosen peer is {:#?}", peer);
     // If unable to get peer, try bootstrap peers
     Ok(())
 }
