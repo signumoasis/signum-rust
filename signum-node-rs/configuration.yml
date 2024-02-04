@@ -1,3 +1,4 @@
 p2p:
   bootstrap_peers:
     - "p2p.signumoasis.xyz:80"
+    - "us-east.signum.network"
