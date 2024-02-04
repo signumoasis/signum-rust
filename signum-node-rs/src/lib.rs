@@ -4,6 +4,7 @@ use models::p2p::{PeerAddress, PeerInfo};
 
 pub mod models;
 pub mod telemetry;
+pub mod workers;
 
 pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
     let mut thebody = HashMap::new();
