@@ -21,7 +21,7 @@ reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_with = { version = "3.6" }
-sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls"] }
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls", "chrono"] }
 tokio = { version = "1.35", features = ["full"] }
 tonic = "0.10"
 tracing = { version = "0.1", features = ["log"] }

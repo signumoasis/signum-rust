@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use sqlx::sqlite::SqliteConnectOptions;
 
 use crate::models::p2p::PeerAddress;
 
@@ -37,7 +38,22 @@ trait ConfigBuilderExtensions {
 /// Settings for the node.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Settings {
+    pub database: DatabaseSettings,
     pub p2p: PeerToPeerSettings,
+}
+
+/// Database settings.
+#[derive(Clone, Debug, Deserialize)]
+pub struct DatabaseSettings {
+    pub filename: String,
+}
+
+impl DatabaseSettings {
+    pub fn get_db(&self) -> SqliteConnectOptions {
+        SqliteConnectOptions::new()
+            .filename(&self.filename)
+            .create_if_missing(true)
+    }
 }
 
 /// Peer to Peer settings.

@@ -1,3 +1,5 @@
+database:
+  filename: "signum.db3"
 p2p:
   bootstrap_peers:
     - "p2p.signumoasis.xyz:80"

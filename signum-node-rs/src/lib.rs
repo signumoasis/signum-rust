@@ -1,11 +1,20 @@
 use std::collections::HashMap;
 
+use configuration::DatabaseSettings;
 use models::p2p::{PeerAddress, PeerInfo};
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
 pub mod configuration;
 pub mod models;
 pub mod telemetry;
 pub mod workers;
+
+/// Get a database connection pool.
+pub fn get_db_pool(configuration: &DatabaseSettings) -> SqlitePool {
+    SqlitePoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy_with(configuration.get_db())
+}
 
 pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
     let mut thebody = HashMap::new();
