@@ -1,7 +1,7 @@
 # THIS JUSTFILE REQUIRES NUSHELL TO BE INSTALLED
 set shell := ["nu", "-c"]
 
-LOG_LEVEL := 'DEBUG'
+LOG_LEVEL := 'INFO'
 
 default:
     @just --list
