@@ -70,7 +70,7 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
 
     // Insert the peers into the database, silently ignoring if they fail
     // due to the unique requirement for primary key
-    tracing::info!("Saving new peers to the database.");
+    tracing::info!("Seeking new peers");
     let mut new_peers_count = 0;
     for peer in peers {
         tracing::trace!("Saving peer {}", peer);
