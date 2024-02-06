@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS peers (
     share_address BOOLEAN,
     network TEXT,
     blacklist_until DATETIME,
-    blacklist_count INTEGER
+    blacklist_count INTEGER NOT NULL DEFAULT 0
 );
