@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 
 use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAddress};
 
-pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
+pub async fn run_peer_finder_forever(settings: Settings) {
     loop {
         let result = peer_finder(settings.clone()).await;
         if result.is_err() {
