@@ -1,15 +1,10 @@
-use std::{
-    fmt::{Debug, Display},
-    str::FromStr,
-};
+use std::fmt::{Debug, Display};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
     configuration::get_configuration,
-    get_peer_info, get_peers,
-    models::p2p::PeerAddress,
     telemetry::{get_subscriber, init_subscriber},
     workers::peer_finder::run_peer_finder_forever,
 };
