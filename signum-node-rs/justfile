@@ -1,6 +1,8 @@
 # THIS JUSTFILE REQUIRES NUSHELL TO BE INSTALLED
 set shell := ["nu", "-c"]
 
+LOG_LEVEL := 'DEBUG'
+
 default:
     @just --list
 
@@ -9,24 +11,24 @@ build:
     cargo build
 
 # run the program with bunyan tracing
-bunyan:
-    cargo run --features=bunyan | bunyan
+bunyan level=LOG_LEVEL:
+    RUST_LOG="INFO,signum_node_rs={{level}}" cargo run --features=bunyan | bunyan
 
 # build the program for release
 release:
     cargo build --release
 
 # run the program
-run:
-    cargo run
+run level=LOG_LEVEL:
+    RUST_LOG="INFO,signum_node_rs={{level}}" cargo run
 
 # run cargo nextest
 test:
     cargo nextest run
 # cargo watch with default tracing (tracing-subscriber)
-watch:
-    RUST_LOG="INFO,signum_node_rs=TRACE" cargo watch -x check -x "run"
+watch level=LOG_LEVEL:
+    RUST_LOG="INFO,signum_node_rs={{level}}" cargo watch -x check -x "run"
 
 # cargo watch with bunyan tracing
-watch-bunyan:
+watch-bunyan level=LOG_LEVEL:
     RUST_LOG="INFO,signum_node_rs=TRACE" cargo watch -x check -x "run --features=bunyan | bunyan"
