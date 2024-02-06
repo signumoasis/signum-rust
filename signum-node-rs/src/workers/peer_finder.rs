@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
 use anyhow::Result;
-use rand::seq::SliceRandom;
 
-use crate::{configuration::Settings, get_db_pool, models::p2p::PeerAddress};
+use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAddress};
 
 /// This worker finds new peers by querying the existing peers in the database.
 /// If no peers exist in the database, it will read from the configuration bootstrap
@@ -51,6 +50,7 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
     };
 
     tracing::debug!("Randomly chosen peer is {:#?}", peer);
-    // If unable to get peer, try bootstrap peers
+    // Next, send a request to that peer asking for its peers list.
+    get_peers(peer);
     Ok(())
 }
