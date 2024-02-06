@@ -70,7 +70,8 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
 
     // Insert the peers into the database, silently ignoring if they fail
     // due to the unique requirement for primary key
-    tracing::info!("Saving {} new peers to the database.", &peers.len());
+    tracing::info!("Saving new peers to the database.");
+    let mut new_peers_count = 0;
     for peer in peers {
         tracing::trace!("Saving peer {}", peer);
         let result = sqlx::query!(
@@ -83,11 +84,17 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
         .execute(&mut *transaction)
         .await;
         tracing::trace!("RESULT: {:?}", result);
-        if result.is_err() {
-            tracing::error!("Unable to save peer: {:?}", result);
-            continue;
+        match result {
+            Ok(r) => {
+                new_peers_count += r.rows_affected();
+            }
+            Err(e) => {
+                tracing::error!("Unable to save peer: {:?}", e);
+                continue;
+            }
         }
     }
     transaction.commit().await?;
+    tracing::info!("Added {} new peers.", new_peers_count);
     Ok(())
 }
