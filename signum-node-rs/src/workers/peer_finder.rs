@@ -7,7 +7,7 @@ use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAd
 pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
     loop {
         peer_finder(settings.clone()).await?;
-        tokio::time::sleep(Duration::from_secs(10)).await;
+        tokio::time::sleep(Duration::from_secs(60)).await;
     }
 }
 
