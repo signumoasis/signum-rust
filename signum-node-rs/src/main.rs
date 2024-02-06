@@ -57,6 +57,7 @@ fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>
     }
 }
 
+#[allow(dead_code)]
 async fn interval_actor_demo() -> Result<()> {
     let mut interval = time::interval(time::Duration::from_secs(10));
     for _ in 1..30 {
