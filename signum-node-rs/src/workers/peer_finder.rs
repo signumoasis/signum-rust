@@ -1,16 +1,18 @@
 use std::{str::FromStr, time::Duration};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAddress};
 
 pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
     loop {
-        peer_finder(settings.clone()).await?;
+        let result = peer_finder(settings.clone()).await;
+        if result.is_err() {
+            tracing::error!("Error in peer finder: {:?}", result);
+        }
         tokio::time::sleep(Duration::from_secs(60)).await;
     }
 }
-
 
 /// This worker finds new peers by querying the existing peers in the database.
 /// If no peers exist in the database, it will read from the configuration bootstrap
@@ -18,7 +20,10 @@ pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
 #[tracing::instrument(name = "Peer Finder", skip(settings))]
 pub async fn peer_finder(settings: Settings) -> Result<()> {
     let db_pool = get_db_pool(&settings.database);
-    let mut transaction = db_pool.begin().await?;
+    let mut transaction = db_pool
+        .begin()
+        .await
+        .context("unable to get transaction from pool")?;
     // Try to get random peer from database
     let row = sqlx::query!(
         r#"
@@ -59,7 +64,9 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
 
     tracing::debug!("Randomly chosen peer is {:#?}", peer);
     // Next, send a request to that peer asking for its peers list.
-    let peers = get_peers(peer).await?;
+    let peers = get_peers(peer)
+        .await
+        .context("unable to get peers from database")?;
 
     // Insert the peers into the database, silently ignoring if they fail
     // due to the unique requirement for primary key
