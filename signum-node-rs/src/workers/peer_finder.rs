@@ -1,12 +1,13 @@
 use std::{str::FromStr, time::Duration};
 
 use anyhow::{Context, Result};
+use sqlx::SqlitePool;
 
-use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAddress};
+use crate::{configuration::Settings, get_peers, models::p2p::PeerAddress};
 
-pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
+pub async fn run_peer_finder_forever(pool: SqlitePool, settings: Settings) -> Result<()> {
     loop {
-        let result = peer_finder(settings.clone()).await;
+        let result = peer_finder(pool.clone(), settings.clone()).await;
         if result.is_err() {
             tracing::error!("Error in peer finder: {:?}", result);
         }
@@ -18,10 +19,9 @@ pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
 /// If no peers exist in the database, it will read from the configuration bootstrap
 /// peers list.
 #[tracing::instrument(name = "Peer Finder", skip(settings))]
-pub async fn peer_finder(settings: Settings) -> Result<()> {
+pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
     tracing::info!("Seeking new peers");
-    let db_pool = get_db_pool(&settings.database);
-    let mut transaction = db_pool
+    let mut transaction = pool
         .begin()
         .await
         .context("unable to get transaction from pool")?;

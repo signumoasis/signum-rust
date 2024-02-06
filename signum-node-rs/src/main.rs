@@ -5,6 +5,7 @@ use anyhow::Result;
 //use signum_node_rs::peer_service::{run_peer_service, Peer, PeerContainer, PeerServiceHandle};
 use signum_node_rs::{
     configuration::get_configuration,
+    get_db_pool,
     telemetry::{get_subscriber, init_subscriber},
     workers::peer_finder::run_peer_finder_forever,
 };
@@ -22,8 +23,11 @@ async fn main() -> Result<()> {
 async fn start() -> Result<()> {
     let configuration =
         get_configuration().expect("Couldn't get the configuration. Unable to continue");
+
+    let db_pool = get_db_pool(&configuration.database);
+
     // let interval_task = tokio::spawn(interval_actor_demo());
-    let peer_finder_task = tokio::spawn(run_peer_finder_forever(configuration));
+    let peer_finder_task = tokio::spawn(run_peer_finder_forever(db_pool.clone(), configuration));
 
     tokio::select! {
         o = peer_finder_task => report_exit("Peer Finder", o),
