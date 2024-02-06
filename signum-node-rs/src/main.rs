@@ -23,13 +23,11 @@ async fn start() -> Result<()> {
     let configuration =
         get_configuration().expect("Couldn't get the configuration. Unable to continue");
     let interval_task = tokio::spawn(interval_actor_demo());
-    // let peer_task = tokio::spawn(get_peers_task());
     let peer_finder_task = tokio::spawn(run_peer_finder_forever(configuration));
 
     tokio::select! {
         o = peer_finder_task => report_exit("Peer Finder", o),
         o = interval_task => report_exit("Interval Task", o),
-        // o = peer_task => report_exit("Peer Task", o),
     };
 
     Ok(())
