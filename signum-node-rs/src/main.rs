@@ -11,7 +11,7 @@ use signum_node_rs::{
     get_peer_info, get_peers,
     models::p2p::PeerAddress,
     telemetry::{get_subscriber, init_subscriber},
-    workers::peer_finder::peer_finder,
+    workers::peer_finder::run_peer_finder_forever,
 };
 use tokio::{task::JoinError, time};
 
@@ -27,13 +27,13 @@ async fn main() -> Result<()> {
 async fn start() -> Result<()> {
     let configuration =
         get_configuration().expect("Couldn't get the configuration. Unable to continue");
-    // let interval_task = tokio::spawn(interval_actor_demo());
+    let interval_task = tokio::spawn(interval_actor_demo());
     // let peer_task = tokio::spawn(get_peers_task());
-    let peer_finder_task = tokio::spawn(peer_finder(configuration));
+    let peer_finder_task = tokio::spawn(run_peer_finder_forever(configuration));
 
     tokio::select! {
         o = peer_finder_task => report_exit("Peer Finder", o),
-        // o = interval_task => report_exit("Interval Task", o),
+        o = interval_task => report_exit("Interval Task", o),
         // o = peer_task => report_exit("Peer Task", o),
     };
 
@@ -103,8 +103,9 @@ async fn get_peers_task() -> Result<()> {
 
 async fn interval_actor_demo() -> Result<()> {
     let mut interval = time::interval(time::Duration::from_secs(10));
-    loop {
+    for _ in 1..30 {
         tracing::debug!("Interval Tick");
         interval.tick().await;
     }
+    Ok(())
 }

@@ -1,8 +1,16 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 use anyhow::Result;
 
 use crate::{configuration::Settings, get_db_pool, get_peers, models::p2p::PeerAddress};
+
+pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
+    loop {
+        peer_finder(settings.clone()).await?;
+        tokio::time::sleep(Duration::from_secs(10)).await;
+    }
+}
+
 
 /// This worker finds new peers by querying the existing peers in the database.
 /// If no peers exist in the database, it will read from the configuration bootstrap
@@ -51,6 +59,27 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
 
     tracing::debug!("Randomly chosen peer is {:#?}", peer);
     // Next, send a request to that peer asking for its peers list.
-    get_peers(peer);
+    let peers = get_peers(peer).await?;
+
+    // Insert the peers into the database, silently ignoring if they fail
+    // due to the unique requirement for primary key
+    tracing::info!("Saving new peers to the database.");
+    for peer in peers {
+        tracing::trace!("Saving peer {}", peer);
+        let result = sqlx::query!(
+            r#" INSERT OR IGNORE
+            INTO peers (peer_address)
+            VALUES ($1)
+        "#,
+            peer
+        )
+        .execute(&mut *transaction)
+        .await;
+        tracing::trace!("RESULT: {:?}", result);
+        if result.is_err() {
+            tracing::error!("Unable to save peer: {:?}", result);
+        }
+    }
+    let _ = transaction.commit().await;
     Ok(())
 }
