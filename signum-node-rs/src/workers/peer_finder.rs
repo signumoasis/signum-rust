@@ -19,6 +19,7 @@ pub async fn run_peer_finder_forever(settings: Settings) -> Result<()> {
 /// peers list.
 #[tracing::instrument(name = "Peer Finder", skip(settings))]
 pub async fn peer_finder(settings: Settings) -> Result<()> {
+    tracing::info!("Seeking new peers");
     let db_pool = get_db_pool(&settings.database);
     let mut transaction = db_pool
         .begin()
@@ -70,10 +71,9 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
 
     // Insert the peers into the database, silently ignoring if they fail
     // due to the unique requirement for primary key
-    tracing::info!("Seeking new peers");
     let mut new_peers_count = 0;
     for peer in peers {
-        tracing::trace!("Saving peer {}", peer);
+        tracing::trace!("Trying to save peer {}", peer);
         let result = sqlx::query!(
             r#" INSERT OR IGNORE
             INTO peers (peer_address)
@@ -83,10 +83,16 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
         )
         .execute(&mut *transaction)
         .await;
-        tracing::trace!("RESULT: {:?}", result);
+
         match result {
             Ok(r) => {
-                new_peers_count += r.rows_affected();
+                let number = r.rows_affected();
+                new_peers_count += number;
+                if number >= 1 {
+                    tracing::debug!("Saving new peer {}", peer);
+                } else {
+                    tracing::debug!("Already have peer {}", peer)
+                }
             }
             Err(e) => {
                 tracing::error!("Unable to save peer: {:?}", e);
@@ -94,7 +100,10 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
             }
         }
     }
-    transaction.commit().await?;
+    transaction
+        .commit()
+        .await
+        .context("unable to commit transaction -- peers not saved")?;
     tracing::info!("Added {} new peers.", new_peers_count);
     Ok(())
 }
