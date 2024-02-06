@@ -88,6 +88,6 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
             continue;
         }
     }
-    let _ = transaction.commit().await;
+    transaction.commit().await?;
     Ok(())
 }
