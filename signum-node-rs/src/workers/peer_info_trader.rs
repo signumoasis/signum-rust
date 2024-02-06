@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 
-use crate::models::p2p::{PeerAddress, PeerInfo};
+use crate::models::p2p::PeerInfo;
 
 pub async fn run_peer_info_trader_forever() -> Result<()> {
     loop {
