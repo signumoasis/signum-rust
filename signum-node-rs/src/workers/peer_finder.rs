@@ -78,6 +78,7 @@ pub async fn peer_finder(settings: Settings) -> Result<()> {
         tracing::trace!("RESULT: {:?}", result);
         if result.is_err() {
             tracing::error!("Unable to save peer: {:?}", result);
+            continue;
         }
     }
     let _ = transaction.commit().await;
