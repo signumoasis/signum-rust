@@ -75,6 +75,9 @@ impl std::fmt::Debug for GetPeerInfoError {
     }
 }
 
+/// Blacklist a client for minutes * blacklist_count, for a maximum of 24 hours.
+/// blacklist_count increments by 1 each time a node is blacklisted, so it will
+/// be ignored for longer and longer, up to 24 hours before retry.
 pub async fn blacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
     let mut transaction = pool.begin().await?;
 
@@ -82,7 +85,7 @@ pub async fn blacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
         r#"
             UPDATE peers
             SET
-                blacklist_until = DATETIME('now','+' || $1 || ' minutes'),
+                blacklist_until = DATETIME('now','+' || (min(($1 * (blacklist_count + 1)), 1440)) || ' minutes'),
                 blacklist_count = blacklist_count + 1,
                 last_seen = DATETIME('now')
             WHERE peer_announced_address = $2
@@ -103,6 +106,8 @@ pub async fn blacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
     Ok(())
 }
 
+/// De-blacklist a node. This should happen anytime this node queries it and receives
+/// a correct response, or if it talks to this node with a correct introduction.
 pub async fn deblacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
     let mut transaction = pool.begin().await?;
 
