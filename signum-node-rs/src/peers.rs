@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use anyhow::Context;
+use anyhow::{Context, Result};
+use sqlx::SqlitePool;
 
 use crate::models::p2p::{PeerAddress, PeerInfo};
 
@@ -43,7 +44,8 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
         .send()
         .await
         .context("unable to connect to peer")?;
-    tracing::debug!("Parsing peer info");
+
+    //TODO: Check for timeouts and forward that error type
 
     //TODO: Think about letting this be optional here and fix it in the future requests
     let peer_ip = response
@@ -71,4 +73,58 @@ impl std::fmt::Debug for GetPeerInfoError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         crate::error_chain_fmt(self, f)
     }
+}
+
+pub async fn blacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
+    let mut transaction = pool.begin().await?;
+
+    let r = sqlx::query!(
+        r#"
+            UPDATE peers
+            SET
+                blacklist_until = DATETIME('now','+' || $1 || ' minutes'),
+                blacklist_count = blacklist_count + 1,
+                last_seen = DATETIME('now')
+            WHERE peer_announced_address = $2
+        "#,
+        10,
+        peer
+    )
+    .execute(&mut *transaction)
+    .await
+    .context(format!("could not blacklist {}", &peer))?;
+    if r.rows_affected() == 0 {
+        anyhow::bail!(
+            "no error occurred but {} was not blacklisted for some reason",
+            &peer
+        );
+    }
+    transaction.commit().await?;
+    Ok(())
+}
+
+pub async fn deblacklist_peer(pool: SqlitePool, peer: PeerAddress) -> Result<()> {
+    let mut transaction = pool.begin().await?;
+
+    let r = sqlx::query!(
+        r#"
+            UPDATE peers
+            SET
+                blacklist_until = NULL,
+                blacklist_count = 0
+            WHERE peer_announced_address = $1
+        "#,
+        peer
+    )
+    .execute(&mut *transaction)
+    .await
+    .context(format!("could not deblacklist {}", &peer))?;
+    if r.rows_affected() == 0 {
+        anyhow::bail!(
+            "no error occurred but {} was not deblacklisted for some reason",
+            &peer
+        );
+    }
+    transaction.commit().await?;
+    Ok(())
 }
