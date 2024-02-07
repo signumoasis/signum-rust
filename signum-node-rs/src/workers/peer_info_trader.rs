@@ -6,7 +6,7 @@ use sqlx::SqlitePool;
 
 use crate::{
     models::p2p::PeerAddress,
-    peers::{blacklist_peer, get_peer_info, GetPeerInfoError},
+    peers::{blacklist_peer, deblacklist_peer, get_peer_info, GetPeerInfoError},
 };
 
 pub async fn run_peer_info_trader_forever(
@@ -102,6 +102,9 @@ pub async fn update_info_task(write_pool: SqlitePool, peer: PeerAddress) -> Resu
             }
 
             transaction.commit().await?;
+
+            // TODO: Consider removing this to avoid deblacklisting a peer providing bad blocks
+            deblacklist_peer(write_pool, peer).await?;
         }
         Err(GetPeerInfoError::MissingAnnouncedAddress(_)) => {
             tracing::warn!(
