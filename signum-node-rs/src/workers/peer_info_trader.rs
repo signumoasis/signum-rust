@@ -4,9 +4,10 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
-use crate::PeerAddress;
-
-use crate::get_peer_info;
+use crate::{
+    models::p2p::PeerAddress,
+    peers::{get_peer_info, GetPeerInfoError},
+};
 
 pub async fn run_peer_info_trader_forever(pool: SqlitePool) -> Result<()> {
     loop {
@@ -51,13 +52,19 @@ pub async fn peer_info_trader(pool: SqlitePool) -> Result<()> {
 
 #[tracing::instrument(name = "Update Info Task", skip_all)]
 pub async fn update_info_task(_pool: SqlitePool, peer: PeerAddress) -> Result<()> {
-    let peer_info = get_peer_info(peer.clone()).await.context("Unable to get peer info");
+    let peer_info = get_peer_info(peer.clone()).await;
     match peer_info {
         Ok(info) => {
             tracing::debug!("PeerInfo: {:?}", info);
         }
-        Err(e) => {
-            tracing::error!("Problem getting peer info for {}: {:?}", &peer, e)
+        Err(GetPeerInfoError::MissingAnnouncedAddress(_)) => {
+            tracing::warn!(
+                "Peer {} has no 'announcedAddress' configured. Blacklisting.",
+                &peer
+            );
+        }
+        Err(GetPeerInfoError::UnexpectedError(e)) => {
+            tracing::error!("Problem getting per info for {}: {:?}", &peer, e);
         }
     }
 

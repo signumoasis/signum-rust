@@ -3,7 +3,7 @@ use std::{str::FromStr, time::Duration};
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
-use crate::{configuration::Settings, get_peers, models::p2p::PeerAddress};
+use crate::{configuration::Settings, models::p2p::PeerAddress, peers::get_peers};
 
 pub async fn run_peer_finder_forever(pool: SqlitePool, settings: Settings) -> Result<()> {
     loop {
