@@ -2328,6 +2328,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "sqlx",
+ "thiserror",
  "tokio",
  "tonic",
  "tracing",
