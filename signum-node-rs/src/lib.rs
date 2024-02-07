@@ -66,7 +66,7 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), anyh
         .to_string();
 
     tracing::trace!("Found IP address {} for PeerAddress {}", &peer_ip, &peer);
-   
+
     let peer_info = response
         .json::<PeerInfo>()
         .await
