@@ -1,12 +1,13 @@
 use std::time::Duration;
 
 use anyhow::Result;
+use sqlx::SqlitePool;
 
 use crate::models::p2p::PeerInfo;
 
-pub async fn run_peer_info_trader_forever() -> Result<()> {
+pub async fn run_peer_info_trader_forever(pool: SqlitePool) -> Result<()> {
     loop {
-        let result = peer_info_trader().await;
+        let result = peer_info_trader(pool.clone()).await;
         if result.is_err() {
             tracing::error!("Error in peer info trader: {:?}", result);
         }
@@ -15,7 +16,7 @@ pub async fn run_peer_info_trader_forever() -> Result<()> {
 }
 /// Gets info from peer nodes and stores it.
 /// Simultaneously supplies this node's info to the peers it contacts.
-pub async fn peer_info_trader() -> Result<()> {
+pub async fn peer_info_trader(pool: SqlitePool) -> Result<()> {
     // Get all peers from the database that haven't been seen in 1 minute
     let peers = Vec::<PeerInfo>::new();
     // Loop through the list to attempt to get the info for each one
