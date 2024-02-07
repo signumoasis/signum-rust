@@ -112,7 +112,12 @@ pub async fn update_info_task(write_pool: SqlitePool, peer: PeerAddress) -> Resu
         }
         Err(GetPeerInfoError::UnexpectedError(e)) => {
             tracing::error!("Problem getting per info for {}: {:?}", &peer, e);
-        } //TODO: On timeout error, increment last seen attempts
+        }
+        Err(GetPeerInfoError::ConnectionTimeout(e)) => {
+            tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
+            tracing::trace!("Timeout caused by: {:#?}", e);
+            blacklist_peer(write_pool, peer).await?;
+        }
     }
 
     Ok(())

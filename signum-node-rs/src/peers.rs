@@ -42,10 +42,15 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
         .header("User-Agent", "BRS/3.8.0")
         .json(&thebody)
         .send()
-        .await
-        .context("unable to connect to peer")?;
+        .await;
 
-    //TODO: Check for timeouts and forward that error type
+    let response = match response {
+        Ok(r) => Ok(r),
+        Err(e) if e.is_timeout() => Err(GetPeerInfoError::ConnectionTimeout(e)),
+        Err(e) => Err(GetPeerInfoError::UnexpectedError(
+            Err(e).context("could not get a response")?,
+        )),
+    }?;
 
     //TODO: Think about letting this be optional here and fix it in the future requests
     let peer_ip = response
@@ -56,15 +61,20 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
 
     tracing::trace!("Found IP address {} for PeerAddress {}", &peer_ip, &peer);
 
-    let peer_info = response.json::<PeerInfo>().await?;
+    let peer_info = match response.json::<PeerInfo>().await {
+        Ok(i) => Ok(i),
+        Err(e) => Err(GetPeerInfoError::MissingAnnouncedAddress(e)),
+    }?;
 
     Ok((peer_info, peer_ip))
 }
 
 #[derive(thiserror::Error)]
 pub enum GetPeerInfoError {
-    #[error(transparent)]
-    MissingAnnouncedAddress(#[from] reqwest::Error),
+    #[error("Missing announced address: {0}")]
+    MissingAnnouncedAddress(#[source] reqwest::Error),
+    #[error("Connection timeout {0}")]
+    ConnectionTimeout(#[source] reqwest::Error),
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
