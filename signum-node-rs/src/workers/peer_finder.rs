@@ -18,7 +18,7 @@ pub async fn run_peer_finder_forever(pool: SqlitePool, settings: Settings) -> Re
 /// This worker finds new peers by querying the existing peers in the database.
 /// If no peers exist in the database, it will read from the configuration bootstrap
 /// peers list.
-#[tracing::instrument(name = "Peer Finder", skip(settings))]
+#[tracing::instrument(name = "Peer Finder", skip_all)]
 pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
     tracing::info!("Seeking new peers");
     let mut transaction = pool
