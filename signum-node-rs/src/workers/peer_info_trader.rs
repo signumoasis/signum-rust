@@ -51,8 +51,15 @@ pub async fn peer_info_trader(pool: SqlitePool) -> Result<()> {
 
 #[tracing::instrument(name = "Update Info Task", skip_all)]
 pub async fn update_info_task(_pool: SqlitePool, peer: PeerAddress) -> Result<()> {
-    let peer_info = get_peer_info(peer).await.context("Unable to get peer info");
-    tracing::debug!("PeerInfo: {:#?}", peer_info);
+    let peer_info = get_peer_info(peer.clone()).await.context("Unable to get peer info");
+    match peer_info {
+        Ok(info) => {
+            tracing::debug!("PeerInfo: {:?}", info);
+        }
+        Err(e) => {
+            tracing::error!("Problem getting peer info for {}: {:?}", &peer, e)
+        }
+    }
 
     Ok(())
 }
