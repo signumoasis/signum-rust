@@ -28,7 +28,7 @@ pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
     // Try to get random peer from database
     let row = sqlx::query!(
         r#"
-            SELECT peer_address
+            SELECT peer_announced_address
             FROM peers
             WHERE blacklist_until IS NULL or blacklist_until < DATETIME('now')
             ORDER BY RANDOM()
@@ -40,7 +40,7 @@ pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
 
     // Check if we were able to get a row
     let x = if let Some(r) = row {
-        PeerAddress::from_str(r.peer_address.as_str())
+        PeerAddress::from_str(r.peer_announced_address.as_str())
     } else {
         let err = anyhow::anyhow!("No valid peers available in the database.");
         tracing::debug!("Couldn't get peer from database: {}", err);
@@ -76,7 +76,7 @@ pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
         tracing::trace!("Trying to save peer {}", peer);
         let result = sqlx::query!(
             r#" INSERT OR IGNORE
-            INTO peers (peer_address)
+            INTO peers (peer_announced_address)
             VALUES ($1)
         "#,
             peer
