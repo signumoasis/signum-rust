@@ -1,9 +1,12 @@
+use std::str::FromStr;
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
-use crate::models::p2p::PeerInfo;
+use crate::PeerAddress;
+
+use crate::get_peer_info;
 
 pub async fn run_peer_info_trader_forever(pool: SqlitePool) -> Result<()> {
     loop {
@@ -16,18 +19,40 @@ pub async fn run_peer_info_trader_forever(pool: SqlitePool) -> Result<()> {
 }
 /// Gets info from peer nodes and stores it.
 /// Simultaneously supplies this node's info to the peers it contacts.
+#[tracing::instrument(name = "Peer Info Trader", skip_all)]
 pub async fn peer_info_trader(pool: SqlitePool) -> Result<()> {
     // Get all peers from the database that haven't been seen in 1 minute
-    let peers = Vec::<PeerInfo>::new();
+    let peers = sqlx::query!(
+        r#"
+        SELECT peer_announced_address
+        FROM peers
+        WHERE last_seen is NULL
+            OR last_seen < DateTime('now', '+1 minute')
+        "#
+    )
+    .fetch_all(&pool.clone())
+    .await
+    .context("unable to fetch peers from databse")?
+    .iter()
+    .map(|row| PeerAddress::from_str(&row.peer_announced_address))
+    .collect::<Result<Vec<PeerAddress>, _>>()?;
+
+    tracing::info!("Refreshing {} known peers", &peers.len());
+
     // Loop through the list to attempt to get the info for each one
     for peer in peers {
+        tracing::trace!("Launching update task for {}", &peer);
         // Spawn update info task
-        tokio::spawn(update_info_task(peer));
+        tokio::spawn(update_info_task(pool.clone(), peer));
     }
 
     Ok(())
 }
 
-pub async fn update_info_task(peer: PeerInfo) -> Result<PeerInfo> {
-    todo!()
+#[tracing::instrument(name = "Update Info Task", skip_all)]
+pub async fn update_info_task(_pool: SqlitePool, peer: PeerAddress) -> Result<()> {
+    let peer_info = get_peer_info(peer).await.context("Unable to get peer info");
+    tracing::debug!("PeerInfo: {:#?}", peer_info);
+
+    Ok(())
 }
