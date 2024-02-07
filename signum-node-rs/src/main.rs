@@ -6,7 +6,9 @@ use signum_node_rs::{
     configuration::get_configuration,
     get_db_pool,
     telemetry::{get_subscriber, init_subscriber},
-    workers::peer_finder::run_peer_finder_forever,
+    workers::{
+        peer_finder::run_peer_finder_forever, peer_info_trader::run_peer_info_trader_forever,
+    },
 };
 use tokio::task::JoinError;
 
@@ -27,9 +29,11 @@ async fn start() -> Result<()> {
 
     // let interval_task = tokio::spawn(interval_actor_demo());
     let peer_finder_task = tokio::spawn(run_peer_finder_forever(db_pool.clone(), configuration));
+    let peer_info_trader_task = tokio::spawn(run_peer_info_trader_forever(db_pool.clone()));
 
     tokio::select! {
         o = peer_finder_task => report_exit("Peer Finder", o),
+        o = peer_info_trader_task => report_exit("Peer Info Trader", o),
         // o = interval_task => report_exit("Interval Task", o),
     };
 
