@@ -49,9 +49,18 @@ pub struct DatabaseSettings {
 }
 
 impl DatabaseSettings {
-    pub fn get_db(&self) -> SqliteConnectOptions {
+    pub fn get_writable_db(&self) -> SqliteConnectOptions {
         SqliteConnectOptions::new()
             .filename(&self.filename)
+            .optimize_on_close(true, None)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .create_if_missing(true)
+    }
+    pub fn get_read_only_db(&self) -> SqliteConnectOptions {
+        SqliteConnectOptions::new()
+            .filename(&self.filename)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .read_only(true)
             .create_if_missing(true)
     }
 }

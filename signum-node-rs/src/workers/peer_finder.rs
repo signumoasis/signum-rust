@@ -5,9 +5,13 @@ use sqlx::SqlitePool;
 
 use crate::{configuration::Settings, models::p2p::PeerAddress, peers::get_peers};
 
-pub async fn run_peer_finder_forever(pool: SqlitePool, settings: Settings) -> Result<()> {
+pub async fn run_peer_finder_forever(
+    read_pool: SqlitePool,
+    write_pool: SqlitePool,
+    settings: Settings,
+) -> Result<()> {
     loop {
-        let result = peer_finder(pool.clone(), settings.clone()).await;
+        let result = peer_finder(read_pool.clone(), write_pool.clone(), settings.clone()).await;
         if result.is_err() {
             tracing::error!("Error in peer finder: {:?}", result);
         }
@@ -19,12 +23,12 @@ pub async fn run_peer_finder_forever(pool: SqlitePool, settings: Settings) -> Re
 /// If no peers exist in the database, it will read from the configuration bootstrap
 /// peers list.
 #[tracing::instrument(name = "Peer Finder", skip_all)]
-pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
+pub async fn peer_finder(
+    read_pool: SqlitePool,
+    write_pool: SqlitePool,
+    settings: Settings,
+) -> Result<()> {
     tracing::info!("Seeking new peers");
-    let mut transaction = pool
-        .begin()
-        .await
-        .context("unable to get transaction from pool")?;
     // Try to get random peer from database
     let row = sqlx::query!(
         r#"
@@ -35,7 +39,7 @@ pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
             LIMIT 1;
         "#
     )
-    .fetch_optional(&mut *transaction)
+    .fetch_optional(&read_pool)
     .await?;
 
     // Check if we were able to get a row
@@ -68,6 +72,11 @@ pub async fn peer_finder(pool: SqlitePool, settings: Settings) -> Result<()> {
     let peers = get_peers(peer)
         .await
         .context("unable to get peers from database")?;
+
+    let mut transaction = write_pool
+        .begin()
+        .await
+        .context("unable to get transaction from pool")?;
 
     // Insert the peers into the database, silently ignoring if they fail
     // due to the unique requirement for primary key

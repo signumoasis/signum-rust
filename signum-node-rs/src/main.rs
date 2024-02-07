@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use signum_node_rs::{
     configuration::get_configuration,
-    get_db_pool,
+    get_read_only_db_pool, get_writable_db_pool,
     telemetry::{get_subscriber, init_subscriber},
     workers::{
         peer_finder::run_peer_finder_forever, peer_info_trader::run_peer_info_trader_forever,
@@ -25,11 +25,19 @@ async fn start() -> Result<()> {
     let configuration =
         get_configuration().expect("Couldn't get the configuration. Unable to continue");
 
-    let db_pool = get_db_pool(&configuration.database);
+    let read_db_pool = get_read_only_db_pool(&configuration.database);
+    let write_db_pool = get_writable_db_pool(&configuration.database);
 
     // let interval_task = tokio::spawn(interval_actor_demo());
-    let peer_finder_task = tokio::spawn(run_peer_finder_forever(db_pool.clone(), configuration));
-    let peer_info_trader_task = tokio::spawn(run_peer_info_trader_forever(db_pool.clone()));
+    let peer_finder_task = tokio::spawn(run_peer_finder_forever(
+        read_db_pool.clone(),
+        write_db_pool.clone(),
+        configuration,
+    ));
+    let peer_info_trader_task = tokio::spawn(run_peer_info_trader_forever(
+        read_db_pool.clone(),
+        write_db_pool.clone(),
+    ));
 
     tokio::select! {
         o = peer_finder_task => report_exit("Peer Finder", o),

@@ -20,9 +20,16 @@ pub fn error_chain_fmt(
     Ok(())
 }
 
-/// Get a database connection pool.
-pub fn get_db_pool(configuration: &DatabaseSettings) -> SqlitePool {
+/// Get a read-only database connection pool.
+pub fn get_read_only_db_pool(configuration: &DatabaseSettings) -> SqlitePool {
     SqlitePoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy_with(configuration.get_db())
+        .connect_lazy_with(configuration.get_read_only_db())
+}
+/// Get a writable database connection pool.
+pub fn get_writable_db_pool(configuration: &DatabaseSettings) -> SqlitePool {
+    SqlitePoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .max_connections(1)
+        .connect_lazy_with(configuration.get_writable_db())
 }
