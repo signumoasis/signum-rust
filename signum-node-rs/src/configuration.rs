@@ -39,6 +39,7 @@ trait ConfigBuilderExtensions {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
+    pub node: NodeSettings,
     pub p2p: PeerToPeerSettings,
 }
 
@@ -63,6 +64,13 @@ impl DatabaseSettings {
             .read_only(true)
             .create_if_missing(true)
     }
+}
+
+#[derive(Clone,Debug,Deserialize)]
+pub struct NodeSettings {
+    pub my_address: String,
+    pub cash_back_id: String,
+    pub network: String,
 }
 
 /// Peer to Peer settings.

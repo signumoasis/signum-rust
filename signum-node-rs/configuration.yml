@@ -1,6 +1,11 @@
 database:
   filename: "signum.db3"
+node:
+  my_address: "rustdevnode.signumoasis.xyz:80"
+  cash_back_id: "15595382771538009899"
+  network: "Signum"
 p2p:
+  snr_reward_address: S-C9TD-24WW-RUD3-FGHVJ
   bootstrap_peers:
     - "p2p.signumoasis.xyz:80"
     - "us-east.signum.network"
