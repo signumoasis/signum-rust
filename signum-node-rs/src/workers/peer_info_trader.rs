@@ -41,7 +41,7 @@ pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> 
 
     tracing::info!("Refreshing {} known peers", &peers.len());
 
-    // Loop through the list to attempt to get the info for each one
+    // Loop through the list to attempt to update the info for each one
     for peer in peers {
         tracing::trace!("Launching update task for {}", &peer);
         // Spawn update info task
