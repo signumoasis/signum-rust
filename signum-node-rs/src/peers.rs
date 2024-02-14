@@ -53,7 +53,8 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
                         platform = $5,
                         share_address = $6,
                         network = $7,
-                        last_seen = DATETIME('now')
+                        last_seen = DATETIME('now'),
+                        attempts_since_last_seen = 0
                     WHERE
                         peer_announced_address = $8
                 "#,
@@ -91,14 +92,48 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
         }
         Err(GetPeerInfoError::UnexpectedError(e)) => {
             tracing::error!("Problem getting peer info for {}: {:?}", &peer, e);
+            increment_attempts_since_last_seen(write_pool, peer).await?;
         }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
             tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
             tracing::trace!("Timeout caused by: {:#?}", e);
+
+            increment_attempts_since_last_seen(write_pool.clone(), peer.clone()).await?;
             blacklist_peer(write_pool, peer).await?;
         }
     }
 
+    Ok(())
+}
+
+pub async fn increment_attempts_since_last_seen(
+    write_pool: SqlitePool,
+    peer: PeerAddress,
+) -> Result<()> {
+    let mut transaction = write_pool.begin().await?;
+
+    let r = sqlx::query!(
+        r#"
+            UPDATE peers
+            SET
+                attempts_since_last_seen = attempts_since_last_seen + 1
+            WHERE peer_announced_address = $1
+        "#,
+        peer
+    )
+    .execute(&mut *transaction)
+    .await
+    .context(format!(
+        "could not increment last_seen_attempts for {}",
+        &peer
+    ))?;
+    if r.rows_affected() == 0 {
+        anyhow::bail!(
+            "no error occurred but last_seen_attempts for {} was not incremented for some reason",
+            &peer
+        );
+    }
+    transaction.commit().await?;
     Ok(())
 }
 
