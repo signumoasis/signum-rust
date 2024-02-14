@@ -3,7 +3,11 @@ use std::{str::FromStr, time::Duration};
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
-use crate::{configuration::Settings, models::p2p::PeerAddress, peers::get_peers};
+use crate::{
+    configuration::Settings,
+    models::p2p::PeerAddress,
+    peers::{get_peers, update_db_peer_info},
+};
 
 pub async fn run_peer_finder_forever(
     read_pool: SqlitePool,
@@ -99,6 +103,8 @@ pub async fn peer_finder(
                 new_peers_count += number;
                 if number > 0 {
                     tracing::debug!("Saving new peer {}", peer);
+                    tracing::debug!("Attempting to update peer info database for '{}'", &peer);
+                    tokio::spawn(update_db_peer_info(write_pool.clone(), peer));
                 } else {
                     tracing::debug!("Already have peer {}", peer)
                 }
