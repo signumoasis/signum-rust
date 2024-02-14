@@ -97,7 +97,7 @@ pub async fn peer_finder(
             Ok(r) => {
                 let number = r.rows_affected();
                 new_peers_count += number;
-                if number >= 1 {
+                if number > 0 {
                     tracing::debug!("Saving new peer {}", peer);
                 } else {
                     tracing::debug!("Already have peer {}", peer)
