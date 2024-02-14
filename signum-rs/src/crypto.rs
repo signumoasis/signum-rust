@@ -8,9 +8,9 @@
 /// # Returns
 /// A array of [`u8`] representing the decrypted data.
 pub fn decrypt_data(
-    encrypted_data: impl EncryptedData,
-    sender_public_key_hex: &str,
-    recipient_private_key_hex: &str,
+    _encrypted_data: impl EncryptedData,
+    _sender_public_key_hex: &str,
+    _recipient_private_key_hex: &str,
 ) {
     todo!()
 }
