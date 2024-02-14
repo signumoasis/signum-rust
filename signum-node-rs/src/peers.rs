@@ -27,6 +27,80 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
     Ok(response.peers)
 }
 
+/// Requests peer information from the the supplied PeerAddress. Updates the database
+/// with the acquired information. Returns a [`anyhow::Result<()>`].
+#[tracing::instrument(name = "Update Info Task", skip_all)]
+pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> Result<()> {
+    let peer_info = get_peer_info(peer.clone()).await;
+    match peer_info {
+        Ok(info) => {
+            tracing::trace!("PeerInfo: {:?}", &info);
+
+            let ip = info.1;
+            let info = info.0;
+
+            let mut transaction = write_pool.begin().await?;
+
+            let r = sqlx::query!(
+                r#"
+                    UPDATE peers
+                    SET
+                        peer_announced_address = $1,
+                        peer_ip_address = $2,
+                        application = $3,
+                        version = $4,
+                        platform = $5,
+                        share_address = $6,
+                        network = $7,
+                        last_seen = DATETIME('now')
+                    WHERE
+                        peer_announced_address = $8
+                "#,
+                info.announced_address,
+                ip,
+                info.application,
+                info.version,
+                info.platform,
+                info.share_address,
+                info.network_name,
+                peer
+            )
+            .execute(&mut *transaction)
+            .await
+            .context(format!("unable to update peer info for {}", &peer))?;
+
+            if r.rows_affected() == 0 {
+                anyhow::bail!(
+                    "no error occurred but peer {} was not updated for some reason",
+                    &peer
+                );
+            }
+
+            transaction.commit().await?;
+
+            // TODO: Consider removing this to avoid deblacklisting a peer providing bad blocks
+            deblacklist_peer(write_pool, peer).await?;
+        }
+        Err(GetPeerInfoError::MissingAnnouncedAddress(_)) => {
+            tracing::warn!(
+                "Peer {} has no 'announcedAddress' configured. Blacklisting.",
+                &peer
+            );
+            blacklist_peer(write_pool, peer).await?;
+        }
+        Err(GetPeerInfoError::UnexpectedError(e)) => {
+            tracing::error!("Problem getting per info for {}: {:?}", &peer, e);
+        }
+        Err(GetPeerInfoError::ConnectionTimeout(e)) => {
+            tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
+            tracing::trace!("Timeout caused by: {:#?}", e);
+            blacklist_peer(write_pool, peer).await?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Makes an http request to the supplied peer address and parses the returned information
 /// into a [`PeerInfo`].
 ///
