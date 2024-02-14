@@ -71,7 +71,7 @@ pub async fn peer_finder(
         peer.to_owned()
     };
 
-    tracing::debug!("Randomly chosen peer is {:#?}", peer);
+    tracing::debug!("Randomly chosen peer is {}", peer);
     // Next, send a request to that peer asking for its peers list.
     let peers = get_peers(peer)
         .await
