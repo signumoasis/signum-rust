@@ -17,13 +17,14 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
         .send()
         .await?;
 
-    tracing::debug!("Parsing peers");
+    tracing::trace!("Parsing peers...");
     #[derive(Debug, serde::Deserialize)]
     struct PeerContainer {
         #[serde(rename = "peers")]
         peers: Vec<PeerAddress>,
     }
     let response = peer_request.json::<PeerContainer>().await?;
+    tracing::trace!("Peers successfully parsed: {:#?}", &response);
     Ok(response.peers)
 }
 
@@ -89,7 +90,7 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
             blacklist_peer(write_pool, peer).await?;
         }
         Err(GetPeerInfoError::UnexpectedError(e)) => {
-            tracing::error!("Problem getting per info for {}: {:?}", &peer, e);
+            tracing::error!("Problem getting peer info for {}: {:?}", &peer, e);
         }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
             tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
