@@ -54,6 +54,8 @@ pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> 
     Ok(())
 }
 
+/// Requests peer information from the the supplied PeerAddress. Updates the database
+/// with the acquired information. Returns a [`anyhow::Result<()>`].
 #[tracing::instrument(name = "Update Info Task", skip_all)]
 pub async fn update_info_task(write_pool: SqlitePool, peer: PeerAddress) -> Result<()> {
     let peer_info = get_peer_info(peer.clone()).await;

@@ -27,6 +27,11 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
     Ok(response.peers)
 }
 
+/// Makes an http request to the supplied peer address and parses the returned information
+/// into a [`PeerInfo`].
+///
+/// Returns a tuple of ([`PeerInfo`], [`String`]) where the string is the resolved IP
+/// address of the peer.
 #[tracing::instrument]
 pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetPeerInfoError> {
     let mut thebody = HashMap::new();
