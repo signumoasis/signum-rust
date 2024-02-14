@@ -108,7 +108,6 @@ pub enum PeerStates {
     NonConnected,
 }
 
-
 #[derive(serde::Deserialize, Debug)]
 #[serde(untagged)]
 pub enum GetMyPeerInfoResponse {

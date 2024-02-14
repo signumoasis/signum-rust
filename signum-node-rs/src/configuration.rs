@@ -66,7 +66,7 @@ impl DatabaseSettings {
     }
 }
 
-#[derive(Clone,Debug,Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct NodeSettings {
     pub my_address: String,
     pub cash_back_id: String,
