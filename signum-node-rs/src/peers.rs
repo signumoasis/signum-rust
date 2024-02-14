@@ -27,6 +27,7 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
     Ok(response.peers)
 }
 
+#[tracing::instrument]
 pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetPeerInfoError> {
     let mut thebody = HashMap::new();
     thebody.insert("protocol", "B1");
