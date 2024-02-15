@@ -56,6 +56,10 @@ where
 
     let bunyan_format = BunyanFormattingLayer::new(name, sink);
 
+    let bunyan_layer = JsonStorageLayer
+        .and_then(bunyan_format)
+        .with_filter(filter_layer);
+
     let subscriber = Registry::default();
     #[cfg(feature = "tokio-console")]
     let subscriber = {
@@ -64,10 +68,7 @@ where
             console_subscriber::spawn().with_filter(tracing_subscriber::filter::LevelFilter::TRACE);
         subscriber.with(tokio_console_fmt_layer)
     };
-    let subscriber = subscriber
-        .with(filter_layer)
-        .with(JsonStorageLayer)
-        .with(bunyan_format);
+    let subscriber = subscriber.with(bunyan_layer);
     subscriber
 }
 
