@@ -31,7 +31,7 @@ watch level=LOG_LEVEL:
 
 # cargo watch with bunyan tracing
 watch-bunyan level=LOG_LEVEL:
-    RUST_LOG="INFO,signum_node_rs=TRACE" cargo watch -x check -x "run --features=bunyan | bunyan"
+    RUST_LOG="INFO,signum_node_rs={{level}}" cargo watch -x check -x "run --features=bunyan | bunyan"
 
 # reset the database
 reset:
