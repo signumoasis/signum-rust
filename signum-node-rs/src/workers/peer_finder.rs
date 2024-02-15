@@ -64,8 +64,7 @@ pub async fn peer_finder(
         let peer = settings
             .p2p
             .bootstrap_peers
-            // TODO: Make this selection random
-            .get(0)
+            .first()
             .ok_or_else(|| anyhow::anyhow!("Unable to get peer"))?;
         tracing::debug!("Trying the bootstrap list.");
         peer.to_owned()

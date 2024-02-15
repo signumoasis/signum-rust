@@ -33,9 +33,8 @@ where
             console_subscriber::spawn().with_filter(tracing_subscriber::filter::LevelFilter::TRACE);
         subscriber.with(tokio_console_fmt_layer)
     };
-    let subscriber = subscriber.with(fmt_layer.with_filter(filter_layer));
 
-    subscriber
+    subscriber.with(fmt_layer.with_filter(filter_layer))
 }
 
 /// Sets up a tracing subscriber.
@@ -68,8 +67,8 @@ where
             console_subscriber::spawn().with_filter(tracing_subscriber::filter::LevelFilter::TRACE);
         subscriber.with(tokio_console_fmt_layer)
     };
-    let subscriber = subscriber.with(bunyan_layer);
-    subscriber
+
+    subscriber.with(bunyan_layer)
 }
 
 /// Sets the global default subscriber. Should only be called once.
