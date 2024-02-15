@@ -25,9 +25,17 @@ where
         .with_span_events(FmtSpan::NONE)
         .with_writer(sink);
 
-    tracing_subscriber::registry()
-        .with(filter_layer)
-        .with(fmt_layer)
+    let subscriber = tracing_subscriber::registry();
+    #[cfg(feature = "tokio-console")]
+    let subscriber = {
+        // Only enable this if the feature is enabled.
+        let tokio_console_fmt_layer =
+            console_subscriber::spawn().with_filter(tracing_subscriber::filter::LevelFilter::TRACE);
+        subscriber.with(tokio_console_fmt_layer)
+    };
+    let subscriber = subscriber.with(fmt_layer.with_filter(filter_layer));
+
+    subscriber
 }
 
 /// Sets up a tracing subscriber.
@@ -40,6 +48,7 @@ pub fn get_subscriber<Sink>(
 where
     Sink: for<'a> MakeWriter<'a> + Send + Sync + 'static,
 {
+    use tracing::subscriber;
     use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
     use tracing_subscriber::Registry;
 
@@ -48,10 +57,19 @@ where
 
     let bunyan_format = BunyanFormattingLayer::new(name, sink);
 
-    Registry::default()
+    let subscriber = Registry::default();
+    #[cfg(feature = "tokio-console")]
+    let subscriber = {
+        // Only enable this if the feature is enabled.
+        let tokio_console_fmt_layer =
+            console_subscriber::spawn().with_filter(tracing_subscriber::filter::LevelFilter::TRACE);
+        subscriber.with(tokio_console_fmt_layer)
+    };
+    let subscriber = subscriber
         .with(filter_layer)
         .with(JsonStorageLayer)
-        .with(bunyan_format)
+        .with(bunyan_format);
+    subscriber
 }
 
 /// Sets the global default subscriber. Should only be called once.
