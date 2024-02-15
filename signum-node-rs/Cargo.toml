@@ -12,7 +12,7 @@ name = "signum-node-rs"
 
 [features]
 bunyan = ["dep:tracing-bunyan-formatter"]
-tokio-console = ["dep:console-subscriber"]
+tokio-console = ["dep:console-subscriber", "tokio/tracing"]
 
 [dependencies]
 anyhow = "1.0"
@@ -28,7 +28,7 @@ sqlx = { version = "0.7", features = [
     "chrono",
 ] }
 thiserror = "1.0.56"
-tokio = { version = "1.35", features = ["full", "tracing"] }
+tokio = { version = "1.35", features = ["full"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-bunyan-formatter = { version = "0.3", optional = true }
 tracing-log = "0.2"
