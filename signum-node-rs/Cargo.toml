@@ -12,11 +12,12 @@ name = "signum-node-rs"
 
 [features]
 bunyan = ["dep:tracing-bunyan-formatter"]
+tokio-console = ["dep:console-subscriber"]
 
 [dependencies]
 anyhow = "1.0"
 config = "0.14.0"
-rand = "0.8"
+console-subscriber = { version = "0.2.0", optional = true }
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -27,8 +28,7 @@ sqlx = { version = "0.7", features = [
     "chrono",
 ] }
 thiserror = "1.0.56"
-tokio = { version = "1.35", features = ["full"] }
-tonic = "0.10"
+tokio = { version = "1.35", features = ["full", "tracing"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-bunyan-formatter = { version = "0.3", optional = true }
 tracing-log = "0.2"
