@@ -17,6 +17,7 @@ async fn main() -> Result<()> {
     // Begin by setting up tracing
     let subscriber = get_subscriber("signum-node-rs".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
+
     start().await
 }
 
