@@ -29,6 +29,7 @@ async fn start() -> Result<()> {
     let read_db_pool = get_read_only_db_pool(&configuration.database);
     let write_db_pool = get_writable_db_pool(&configuration.database);
 
+    let p2p_api_task = Application::build(configuration.clone()).await?;
     // let interval_task = tokio::spawn(interval_actor_demo());
     let peer_finder_task = tokio::spawn(run_peer_finder_forever(
         read_db_pool.clone(),
@@ -41,6 +42,7 @@ async fn start() -> Result<()> {
     ));
 
     tokio::select! {
+        o = p2p_api_task => report_exit("P2P API Server", o),
         o = peer_finder_task => report_exit("Peer Finder", o),
         o = peer_info_trader_task => report_exit("Peer Info Trader", o),
         // o = interval_task => report_exit("Interval Task", o),

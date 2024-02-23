@@ -1,6 +1,7 @@
 use configuration::DatabaseSettings;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
+pub mod api;
 pub mod configuration;
 pub mod models;
 pub mod peers;
