@@ -23,8 +23,9 @@ pub async fn run_peer_finder_forever(
             "Peer Finder Task",
             job_id = Uuid::new_v4().to_string()
         );
-        let _guard = span.enter();
-        let result = peer_finder(read_pool.clone(), write_pool.clone(), settings.clone()).await;
+        let result = peer_finder(read_pool.clone(), write_pool.clone(), settings.clone())
+            .instrument(span)
+            .await;
         if result.is_err() {
             tracing::error!("Error in peer finder: {:?}", result);
         }

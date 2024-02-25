@@ -19,8 +19,9 @@ pub async fn run_peer_info_trader_forever(
             "Peer Info Trade Task",
             job_id = Uuid::new_v4().to_string()
         );
-        let _guard = span.enter();
-        let result = peer_info_trader(read_pool.clone(), write_pool.clone()).await;
+        let result = peer_info_trader(read_pool.clone(), write_pool.clone())
+            .instrument(span)
+            .await;
         if result.is_err() {
             tracing::error!("Error in peer info trader: {:?}", result);
         }
