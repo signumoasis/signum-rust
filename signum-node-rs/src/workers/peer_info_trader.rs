@@ -52,7 +52,7 @@ pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> 
 
     // Loop through the list to attempt to update the info for each one
     for peer in peers {
-        tracing::trace!("Launching update task for {}", &peer);
+        tracing::debug!("Launching update task for {}", &peer);
         // Spawn update info task
         tokio::spawn(update_db_peer_info(write_pool.clone(), peer).in_current_span());
     }
