@@ -34,3 +34,4 @@ tracing-bunyan-formatter = { version = "0.3", optional = true }
 tracing-log = "0.2"
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
 url = { version = "2.5", features = ["serde"] }
+uuid = { version = "1.7.0", features = ["v4"] }
