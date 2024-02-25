@@ -94,6 +94,16 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
             tracing::error!("Problem getting peer info for {}: {:?}", &peer, e);
             increment_attempts_since_last_seen(write_pool, peer).await?;
         }
+        Err(GetPeerInfoError::ConnectionError(e)) => {
+            tracing::warn!(
+                "Connection error to peer {}. Blacklisting. Caused by:\n\t{}",
+                &peer,
+                e
+            );
+            tracing::trace!("Connection error for {}: Caused by:\n\t{:#?}", &peer, e);
+            increment_attempts_since_last_seen(write_pool.clone(), peer.clone()).await?;
+            blacklist_peer(write_pool, peer).await?;
+        }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
             tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
             tracing::trace!("Timeout caused by: {:#?}", e);
@@ -162,6 +172,7 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
 
     let response = match response {
         Ok(r) => Ok(r),
+        Err(e) if e.is_connect() => Err(GetPeerInfoError::ConnectionError(e)),
         Err(e) if e.is_timeout() => Err(GetPeerInfoError::ConnectionTimeout(e)),
         Err(e) => Err(GetPeerInfoError::UnexpectedError(
             Err(e).context("could not get a response")?,
@@ -189,6 +200,8 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
 pub enum GetPeerInfoError {
     #[error("Missing announced address: {0}")]
     MissingAnnouncedAddress(#[source] reqwest::Error),
+    #[error("Connection error {0}")]
+    ConnectionError(#[source] reqwest::Error),
     #[error("Connection timeout {0}")]
     ConnectionTimeout(#[source] reqwest::Error),
     #[error(transparent)]
