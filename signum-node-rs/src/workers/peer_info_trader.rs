@@ -3,6 +3,8 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
+use tracing::Instrument;
+use uuid::Uuid;
 
 use crate::{models::p2p::PeerAddress, peers::update_db_peer_info};
 
@@ -11,6 +13,13 @@ pub async fn run_peer_info_trader_forever(
     write_pool: SqlitePool,
 ) -> Result<()> {
     loop {
+        // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
+        let span = tracing::span!(
+            tracing::Level::INFO,
+            "Peer Info Trade Task",
+            job_id = Uuid::new_v4().to_string()
+        );
+        let _guard = span.enter();
         let result = peer_info_trader(read_pool.clone(), write_pool.clone()).await;
         if result.is_err() {
             tracing::error!("Error in peer info trader: {:?}", result);
@@ -45,7 +54,7 @@ pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> 
     for peer in peers {
         tracing::trace!("Launching update task for {}", &peer);
         // Spawn update info task
-        tokio::spawn(update_db_peer_info(write_pool.clone(), peer));
+        tokio::spawn(update_db_peer_info(write_pool.clone(), peer).in_current_span());
     }
 
     Ok(())

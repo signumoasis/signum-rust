@@ -2,6 +2,8 @@ use std::{str::FromStr, time::Duration};
 
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
+use tracing::Instrument;
+use uuid::Uuid;
 
 use crate::{
     configuration::Settings,
@@ -15,6 +17,13 @@ pub async fn run_peer_finder_forever(
     settings: Settings,
 ) -> Result<()> {
     loop {
+        // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
+        let span = tracing::span!(
+            tracing::Level::INFO,
+            "Peer Finder Task",
+            job_id = Uuid::new_v4().to_string()
+        );
+        let _guard = span.enter();
         let result = peer_finder(read_pool.clone(), write_pool.clone(), settings.clone()).await;
         if result.is_err() {
             tracing::error!("Error in peer finder: {:?}", result);
@@ -103,7 +112,7 @@ pub async fn peer_finder(
                 if number > 0 {
                     tracing::debug!("Saving new peer {}", peer);
                     tracing::debug!("Attempting to update peer info database for '{}'", &peer);
-                    tokio::spawn(update_db_peer_info(write_pool.clone(), peer));
+                    tokio::spawn(update_db_peer_info(write_pool.clone(), peer).in_current_span());
                 } else {
                     tracing::debug!("Already have peer {}", peer)
                 }
