@@ -1,3 +1,6 @@
+use std::str::FromStr;
+
+use anyhow::Context;
 use serde::Deserialize;
 use sqlx::sqlite::SqliteConnectOptions;
 
@@ -59,19 +62,40 @@ pub struct DatabaseSettings {
 }
 
 impl DatabaseSettings {
-    pub fn get_writable_db(&self) -> SqliteConnectOptions {
-        SqliteConnectOptions::new()
-            .filename(&self.filename)
+    pub fn get_writable_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
+        let connection_string = if !&self.filename.starts_with("sqlite://") {
+            format!("sqlite://{}", self.filename)
+        } else {
+            self.filename.clone()
+        };
+        Ok(SqliteConnectOptions::from_str(&connection_string)
+            .context("couldn't parse connection string")?
             .optimize_on_close(true, None)
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-            .create_if_missing(true)
+            .create_if_missing(true))
+        // SqliteConnectOptions::new()
+        //     .filename(&self.filename)
+        //     .optimize_on_close(true, None)
+        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        //     .create_if_missing(true)
     }
-    pub fn get_read_only_db(&self) -> SqliteConnectOptions {
-        SqliteConnectOptions::new()
-            .filename(&self.filename)
+    pub fn get_read_only_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
+        let connection_string = if !&self.filename.starts_with("sqlite:") {
+            format!("sqlite://{}", self.filename)
+        } else {
+            self.filename.clone()
+        };
+        Ok(SqliteConnectOptions::from_str(&connection_string)
+            .context("couldn't parse connection string")?
+            .optimize_on_close(true, None)
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
             .read_only(true)
-            .create_if_missing(true)
+            .create_if_missing(true))
+        // SqliteConnectOptions::new()
+        //     .filename(&self.filename)
+        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        //     .read_only(true)
+        //     .create_if_missing(true)
     }
 }
 

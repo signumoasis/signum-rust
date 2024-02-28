@@ -27,8 +27,8 @@ async fn start() -> Result<()> {
     let configuration =
         get_configuration().expect("Couldn't get the configuration. Unable to continue");
 
-    let read_db_pool = get_read_only_db_pool(&configuration.database);
-    let write_db_pool = get_writable_db_pool(&configuration.database);
+    let read_db_pool = get_read_only_db_pool(&configuration.database)?;
+    let write_db_pool = get_writable_db_pool(&configuration.database)?;
 
     let p2p_api = Application::build(configuration.clone()).await?;
     let p2p_api_task = tokio::spawn(p2p_api.run_until_stopped());

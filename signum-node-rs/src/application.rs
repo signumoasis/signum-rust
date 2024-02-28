@@ -21,7 +21,7 @@ pub struct Application {
 
 impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
-        let connection_pool = get_connection_pool(&configuration.database);
+        let connection_pool = get_connection_pool(&configuration.database)?;
 
         let address = format!(
             "{}:{}",
@@ -45,8 +45,8 @@ impl Application {
     }
 }
 
-fn get_connection_pool(configuration: &DatabaseSettings) -> SqlitePool {
-    SqlitePoolOptions::new().connect_lazy_with(configuration.get_writable_db())
+fn get_connection_pool(configuration: &DatabaseSettings) -> Result<SqlitePool, anyhow::Error> {
+    Ok(SqlitePoolOptions::new().connect_lazy_with(configuration.get_writable_db()?))
 }
 
 pub struct ApplicationBaseUrl(pub String);

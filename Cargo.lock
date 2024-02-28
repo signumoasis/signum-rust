@@ -2376,6 +2376,7 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
+ "rustls 0.21.10",
  "rustls-pemfile",
  "serde",
  "serde_json",
@@ -2515,6 +2516,7 @@ version = "0.21.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9d5a6813c0759e4609cd494e8e725babae6a2ca7b62a5536a13daaec6fcb7ba"
 dependencies = [
+ "log",
  "ring 0.17.7",
  "rustls-webpki",
  "sct",
@@ -2783,6 +2785,7 @@ dependencies = [
  "anyhow",
  "config",
  "console-subscriber",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_json",
