@@ -9,8 +9,9 @@ use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use tracing_actix_web::TracingLogger;
 
 use crate::{
-    api::{health_check, signum_api_handler},
     configuration::{DatabaseSettings, Settings},
+    health_check,
+    srs_api::signum_api_handler,
 };
 
 pub struct Application {

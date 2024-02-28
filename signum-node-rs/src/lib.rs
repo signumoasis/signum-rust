@@ -1,10 +1,11 @@
+use actix_web::HttpResponse;
 use configuration::DatabaseSettings;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
-pub mod api;
 pub mod configuration;
 pub mod models;
 pub mod peers;
+pub mod srs_api;
 pub mod telemetry;
 pub mod workers;
 
@@ -37,4 +38,9 @@ pub fn get_writable_db_pool(configuration: &DatabaseSettings) -> SqlitePool {
         .acquire_timeout(std::time::Duration::from_secs(2))
         .max_connections(1)
         .connect_lazy_with(configuration.get_writable_db())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
