@@ -73,11 +73,6 @@ impl DatabaseSettings {
             .optimize_on_close(true, None)
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
             .create_if_missing(true))
-        // SqliteConnectOptions::new()
-        //     .filename(&self.filename)
-        //     .optimize_on_close(true, None)
-        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        //     .create_if_missing(true)
     }
     pub fn get_read_only_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
         let connection_string = if !&self.filename.starts_with("sqlite:") {
@@ -91,11 +86,6 @@ impl DatabaseSettings {
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
             .read_only(true)
             .create_if_missing(true))
-        // SqliteConnectOptions::new()
-        //     .filename(&self.filename)
-        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        //     .read_only(true)
-        //     .create_if_missing(true)
     }
 }
 
