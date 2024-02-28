@@ -75,17 +75,7 @@ impl DatabaseSettings {
             .create_if_missing(true))
     }
     pub fn get_read_only_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
-        let connection_string = if !&self.filename.starts_with("sqlite:") {
-            format!("sqlite://{}", self.filename)
-        } else {
-            self.filename.clone()
-        };
-        Ok(SqliteConnectOptions::from_str(&connection_string)
-            .context("couldn't parse connection string")?
-            .optimize_on_close(true, None)
-            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-            .read_only(true)
-            .create_if_missing(true))
+        Ok(self.get_writable_db()?.read_only(true))
     }
 }
 
