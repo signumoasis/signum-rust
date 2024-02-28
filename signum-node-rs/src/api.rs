@@ -1,3 +1,1 @@
-mod application;
-
-pub use application::Application;
+pub mod routes;

@@ -38,9 +38,18 @@ trait ConfigBuilderExtensions {
 /// Settings for the node.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Settings {
+    pub srs_api: SrsApiSettings,
     pub database: DatabaseSettings,
     pub node: NodeSettings,
     pub p2p: PeerToPeerSettings,
+}
+
+/// Settings for the signum-style API.
+#[derive(Clone, Debug, Deserialize)]
+pub struct SrsApiSettings {
+    pub base_url: String,
+    pub listen_address: String,
+    pub listen_port: u16,
 }
 
 /// Database settings.
