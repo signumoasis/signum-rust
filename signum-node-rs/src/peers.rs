@@ -102,6 +102,7 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
             );
             tracing::trace!("Connection error for {}: Caused by:\n\t{:#?}", &peer, e);
             increment_attempts_since_last_seen(write_pool.clone(), peer.clone()).await?;
+            // TODO: Consider only blacklisting after several consecutive bad attempts. 120 minutes?
             blacklist_peer(write_pool, peer).await?;
         }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
@@ -109,6 +110,7 @@ pub async fn update_db_peer_info(write_pool: SqlitePool, peer: PeerAddress) -> R
             tracing::trace!("Timeout caused by: {:#?}", e);
 
             increment_attempts_since_last_seen(write_pool.clone(), peer.clone()).await?;
+            // TODO: Consider only blacklisting after several consecutive bad attempts. 120 minutes?
             blacklist_peer(write_pool, peer).await?;
         }
     }
