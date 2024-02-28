@@ -63,7 +63,7 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     pub fn get_writable_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
-        let connection_string = if !&self.filename.starts_with("sqlite://") {
+        let connection_string = if !&self.filename.starts_with("sqlite:") {
             format!("sqlite://{}", self.filename)
         } else {
             self.filename.clone()
