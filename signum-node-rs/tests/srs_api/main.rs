@@ -1,3 +1,5 @@
 mod health_check;
-mod helpers;
 mod peers;
+
+#[path = "../helpers/mod.rs"]
+mod helpers;
