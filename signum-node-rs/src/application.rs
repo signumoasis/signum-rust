@@ -9,7 +9,7 @@ use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use tracing_actix_web::TracingLogger;
 
 use crate::{
-    api::health_check,
+    api::{health_check, signum_api_handler},
     configuration::{DatabaseSettings, Settings},
 };
 
@@ -61,6 +61,7 @@ async fn run(
     let server = HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
+            .route("/signum", web::post().to(signum_api_handler))
             .route("/health_check", web::get().to(health_check))
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
