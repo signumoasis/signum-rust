@@ -81,7 +81,6 @@ impl DatabaseSettings {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct NodeSettings {
-    pub my_address: String,
     pub cash_back_id: String,
     pub network: String,
 }
@@ -91,4 +90,6 @@ pub struct NodeSettings {
 pub struct PeerToPeerSettings {
     /// Peer addresses to use if none are in the database already.
     pub bootstrap_peers: Vec<PeerAddress>,
+    pub my_address: String,
+    pub snr_reward_address: Option<String>,
 }
