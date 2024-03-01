@@ -62,8 +62,8 @@ async fn run(
     let server = HttpServer::new(move || {
         App::new()
             .wrap(TracingLogger::default())
-            .route("/signum", web::post().to(signum_api_handler))
             .route("/health_check", web::get().to(health_check))
+            .route("/{allroutes:.*}", web::post().to(signum_api_handler))
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
     })
