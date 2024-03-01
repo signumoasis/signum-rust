@@ -9,7 +9,7 @@ use signum_node_rs::{
     workers::{
         peer_finder::run_peer_finder_forever, peer_info_trader::run_peer_info_trader_forever,
     },
-    Application,
+    LegacyPeerApi,
 };
 use tokio::{task::JoinError, time};
 
@@ -30,7 +30,7 @@ async fn start() -> Result<()> {
     let read_db_pool = get_read_only_db_pool(&configuration.database)?;
     let write_db_pool = get_writable_db_pool(&configuration.database)?;
 
-    let p2p_api = Application::build(configuration.clone()).await?;
+    let p2p_api = LegacyPeerApi::build(configuration.clone()).await?;
     let p2p_api_task = tokio::spawn(p2p_api.run_until_stopped());
     // let interval_task = tokio::spawn(interval_actor_demo());
     let peer_finder_task = tokio::spawn(run_peer_finder_forever(

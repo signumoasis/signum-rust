@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use signum_node_rs::{
     configuration::{get_configuration, DatabaseSettings},
     telemetry::{get_subscriber, init_subscriber},
-    Application,
+    LegacyPeerApi,
 };
 use sqlx::SqlitePool;
 
@@ -36,7 +36,7 @@ pub async fn spawn_app() -> TestApp {
         .expect("unable to get dbpool");
 
     // Launch the application as a background task
-    let application = Application::build(configuration.clone())
+    let application = LegacyPeerApi::build(configuration.clone())
         .await
         .expect("failed to build application");
     let application_port = application.port();

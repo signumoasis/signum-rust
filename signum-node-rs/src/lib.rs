@@ -9,9 +9,9 @@ pub mod srs_api;
 pub mod telemetry;
 pub mod workers;
 
-mod application;
+mod legacy_peer_api;
 
-pub use application::*;
+pub use legacy_peer_api::*;
 
 pub fn error_chain_fmt(
     e: &impl std::error::Error,
