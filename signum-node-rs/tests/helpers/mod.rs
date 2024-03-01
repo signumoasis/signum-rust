@@ -1,6 +1,8 @@
 use once_cell::sync::Lazy;
 use signum_node_rs::{
-    configuration::{get_configuration, DatabaseSettings}, srs_api::SrsApiApplication, telemetry::{get_subscriber, init_subscriber}
+    configuration::{get_configuration, DatabaseSettings},
+    srs_api::SrsApiApplication,
+    telemetry::{get_subscriber, init_subscriber},
 };
 use sqlx::SqlitePool;
 

@@ -9,7 +9,6 @@ pub mod srs_api;
 pub mod telemetry;
 pub mod workers;
 
-
 pub fn error_chain_fmt(
     e: &impl std::error::Error,
     f: &mut std::fmt::Formatter<'_>,
