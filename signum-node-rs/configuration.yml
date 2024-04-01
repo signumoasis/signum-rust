@@ -1,5 +1,5 @@
 database:
-  filename: "signum.db3"
+  filename: "signum.surrealdb"
 node:
   cash_back_id: "15595382771538009899"
   network: "Signum"
