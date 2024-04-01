@@ -10,7 +10,7 @@ use surrealdb::{engine::any::Any, Surreal};
 use tracing_actix_web::TracingLogger;
 
 use crate::{
-    configuration::{DatabaseSettings, PeerToPeerSettings, Settings},
+    configuration::{PeerToPeerSettings, Settings},
     health_check,
     srs_api::signum_api_handler,
 };
