@@ -3,6 +3,10 @@ use std::str::FromStr;
 use anyhow::Context;
 use serde::Deserialize;
 use sqlx::sqlite::SqliteConnectOptions;
+use surrealdb::{
+    engine::any::{self, Any},
+    Surreal,
+};
 
 use crate::models::p2p::PeerAddress;
 
@@ -57,6 +61,23 @@ pub struct DatabaseSettings {
 }
 
 impl DatabaseSettings {
+    pub async fn get_db(&self) -> Result<Surreal<Any>, anyhow::Error> {
+        let db = any::connect(format!("file:{}", self.filename)).await?;
+
+        let namespace = "signum";
+        let database = "signum";
+        db.use_ns(namespace).use_db(database).await?;
+
+        tracing::info!(
+            "Opened surrealdb file db {}, using namespace {} and database {}",
+            &self.filename,
+            namespace,
+            database
+        );
+        Ok(db)
+    }
+
+    //TODO: Remove get_writable_db and get_readable_db after surrealdb transition completed
     pub fn get_writable_db(&self) -> Result<SqliteConnectOptions, anyhow::Error> {
         let connection_string = if !&self.filename.starts_with("sqlite:") {
             format!("sqlite://{}", self.filename)
