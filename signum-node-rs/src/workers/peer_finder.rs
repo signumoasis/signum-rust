@@ -37,7 +37,7 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
     tracing::info!("Seeking new peers");
 
     // Try to get random peer from database
-    let result = database
+    let mut response = database
         .query(
             r#"
                 SELECT announced_address
@@ -82,12 +82,10 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
         .await
         .context("unable to get peers from peer")?;
 
-    let response = database;
-
     let mut new_peers_count = 0;
     for peer in peers {
         tracing::trace!("Trying to save peer {}", peer);
-        let result = database
+        let response = database
             .query(
                 r#"
                 CREATE peer
@@ -96,11 +94,11 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
                 }
             "#,
             )
-            .bind(("announced_address", peer.0))
+            .bind(("announced_address", &peer))
             .await;
 
-        match result {
-            Ok(r) => {
+        match response {
+            Ok(mut r) => {
                 if let Ok(_) = r.take::<Vec<String>>("announced_address") {
                     tracing::debug!("Saved new peer {}", &peer);
                     tracing::debug!("Attempting to update peer info database for '{}'", &peer);
