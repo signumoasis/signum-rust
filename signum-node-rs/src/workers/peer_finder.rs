@@ -51,15 +51,17 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
         .await?;
 
     // Check if we were able to get a row
-    let result = result.take::<Vec<PeerAddress>>("announced_address");
+    let peer_address = response
+        .take::<Option<PeerAddress>>("announced_address")
+        .unwrap_or(None);
 
     // Extract the first element of the vec
-    let peer_address = if let Ok(the_vec) = result {
-        the_vec.first().cloned()
-    } else {
-        tracing::debug!("Couldn't get valid peer from database.");
-        None
-    };
+    // let peer_address = if let Ok(the_vec) = result {
+    //     the_vec.first().cloned()
+    // } else {
+    //     tracing::debug!("Couldn't get valid peer from database.");
+    //     None
+    // };
 
     // Check if we got a row AND were able to parse it
     let peer_address = if let Some(peer_address) = peer_address {
