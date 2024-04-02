@@ -21,13 +21,16 @@ pub struct SrsApiApplication {
 }
 
 impl SrsApiApplication {
-    pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
+    pub async fn build(
+        configuration: Settings,
+        database: Surreal<Any>,
+    ) -> Result<Self, anyhow::Error> {
         // let connection_pool = get_connection_pool(&configuration.database)?;
-        let database = configuration
-            .database
-            .get_db()
-            .await
-            .context("could not get database connection")?;
+        // let database = configuration
+        //     .database
+        //     .get_db()
+        //     .await
+        //     .context("could not get database connection")?;
 
         let address = format!(
             "{}:{}",
