@@ -1,17 +1,13 @@
-use std::str::FromStr;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use sqlx::SqlitePool;
+use surrealdb::{engine::any::Any, Surreal};
 use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{models::p2p::PeerAddress, peers::update_db_peer_info};
 
-pub async fn run_peer_info_trader_forever(
-    read_pool: SqlitePool,
-    write_pool: SqlitePool,
-) -> Result<()> {
+pub async fn run_peer_info_trader_forever(database: Surreal<Any>) -> Result<()> {
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(
@@ -19,9 +15,7 @@ pub async fn run_peer_info_trader_forever(
             "Peer Info Trade Task",
             job_id = Uuid::new_v4().to_string()
         );
-        let result = peer_info_trader(read_pool.clone(), write_pool.clone())
-            .instrument(span)
-            .await;
+        let result = peer_info_trader(database.clone()).instrument(span).await;
         if result.is_err() {
             tracing::error!("Error in peer info trader: {:?}", result);
         }
@@ -31,23 +25,22 @@ pub async fn run_peer_info_trader_forever(
 /// Gets info from peer nodes and stores it.
 /// Simultaneously supplies this node's info to the peers it contacts.
 #[tracing::instrument(name = "Peer Info Trader", skip_all)]
-pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> Result<()> {
+pub async fn peer_info_trader(database: Surreal<Any>) -> Result<()> {
     // Get all peers from the database that haven't been seen in 1 minute
-    let peers = sqlx::query!(
-        r#"
-        SELECT peer_announced_address
-        FROM peers
-        WHERE
-            (blacklist_until IS NULL OR blacklist_until < DATETIME('now'))
-            AND (last_seen is NULL OR last_seen < DateTime('now', '+1 minute'))
-        "#
-    )
-    .fetch_all(&read_pool)
-    .await
-    .context("unable to fetch peers from databse")?
-    .iter()
-    .map(|row| PeerAddress::from_str(&row.peer_announced_address))
-    .collect::<Result<Vec<PeerAddress>, _>>()?;
+    let mut response = database
+        .query(
+            r#"
+            SELECT announced_address
+            FROM peer
+            WHERE
+                blacklist.until IS NULL OR blacklist.until < time::now()
+                AND (last_seen is NONE OR last_seen is NULL OR last_seen < time::now() + 1m
+        "#,
+        )
+        .await
+        .context("unable to fetch peers from the database")?;
+
+    let peers = response.take::<Vec<PeerAddress>>("announced_address")?;
 
     tracing::info!("Refreshing {} known peers", &peers.len());
 
@@ -55,7 +48,7 @@ pub async fn peer_info_trader(read_pool: SqlitePool, write_pool: SqlitePool) -> 
     for peer in peers {
         tracing::debug!("Launching update task for {}", &peer);
         // Spawn update info task
-        tokio::spawn(update_db_peer_info(write_pool.clone(), peer).in_current_span());
+        tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
     }
 
     Ok(())
