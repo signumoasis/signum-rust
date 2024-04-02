@@ -1,6 +1,4 @@
 use actix_web::HttpResponse;
-use configuration::DatabaseSettings;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 
 pub mod configuration;
 pub mod models;
@@ -20,22 +18,6 @@ pub fn error_chain_fmt(
         current = cause.source();
     }
     Ok(())
-}
-
-/// Get a read-only database connection pool.
-pub fn get_read_only_db_pool(
-    configuration: &DatabaseSettings,
-) -> Result<SqlitePool, anyhow::Error> {
-    Ok(SqlitePoolOptions::new()
-        .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy_with(configuration.get_read_only_db()?))
-}
-/// Get a writable database connection pool.
-pub fn get_writable_db_pool(configuration: &DatabaseSettings) -> Result<SqlitePool, anyhow::Error> {
-    Ok(SqlitePoolOptions::new()
-        .acquire_timeout(std::time::Duration::from_secs(2))
-        .max_connections(1)
-        .connect_lazy_with(configuration.get_writable_db()?))
 }
 
 #[tracing::instrument(skip_all)]

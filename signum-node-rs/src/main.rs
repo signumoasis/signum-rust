@@ -4,7 +4,6 @@ use anyhow::Result;
 
 use signum_node_rs::{
     configuration::get_configuration,
-    get_read_only_db_pool, get_writable_db_pool,
     srs_api::SrsApiApplication,
     telemetry::{get_subscriber, init_subscriber},
     workers::{
