@@ -34,7 +34,7 @@ pub async fn peer_info_trader(database: Surreal<Any>) -> Result<()> {
             FROM peer
             WHERE
                 blacklist.until IS NULL OR blacklist.until < time::now()
-                AND (last_seen is NONE OR last_seen is NULL OR last_seen < time::now() + 1m
+                AND (last_seen is NONE OR last_seen is NULL OR last_seen < time::now() + 1m)
         "#,
         )
         .await
