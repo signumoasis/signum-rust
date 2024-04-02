@@ -5,7 +5,6 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use anyhow::Context;
 use surrealdb::{engine::any::Any, Surreal};
 use tracing_actix_web::TracingLogger;
 

@@ -1,8 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::Context;
 use serde::Deserialize;
-use sqlx::sqlite::SqliteConnectOptions;
 use surrealdb::{
     engine::any::{self, Any},
     Surreal,
