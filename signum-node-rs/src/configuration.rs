@@ -62,7 +62,7 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     pub async fn get_db(&self) -> Result<Surreal<Any>, anyhow::Error> {
-        let db = any::connect(format!("file:{}", self.filename)).await?;
+        let db = any::connect(format!("speedb:{}", self.filename)).await?;
 
         let namespace = "signum";
         let database = "signum";
