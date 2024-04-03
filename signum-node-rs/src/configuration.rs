@@ -60,6 +60,7 @@ pub struct DatabaseSettings {
 }
 
 impl DatabaseSettings {
+    #[tracing::instrument(skip_all)]
     pub async fn get_db(&self) -> Result<Surreal<Any>, anyhow::Error> {
         let db = any::connect(&self.filename).await?;
         // let db = any::connect(format!("speedb:{}", self.filename)).await?;
@@ -85,8 +86,25 @@ impl DatabaseSettings {
             namespace,
             database
         );
+
+        tracing::info!("Initializing database");
+        let db = initialize_database(db).await?;
+
         Ok(db)
     }
+}
+
+#[tracing::instrument(skip_all)]
+async fn initialize_database(db: Surreal<Any>) -> Result<Surreal<Any>, anyhow::Error> {
+    tracing::info!("Defining unique index on announced_address field");
+    db.query(
+        r#"
+            DEFINE INDEX unique_announced_address ON peer COLUMNS announced_address UNIQUE
+        "#,
+    )
+    .await?;
+
+    Ok(db)
 }
 
 #[derive(Clone, Debug, Deserialize)]
