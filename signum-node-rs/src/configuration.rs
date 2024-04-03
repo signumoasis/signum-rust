@@ -120,18 +120,30 @@ pub struct PeerToPeerSettings {
 
 fn default_value_bootstrap_peers() -> Vec<PeerAddress> {
     vec![
-        PeerAddress::from_str("212.98.92.236").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("108.61.251.202").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("190.15.195.118").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("24.96.113.8").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("88.64.234.237").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("137.135.203.145").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("70.108.6.237").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("144.91.84.164").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("213.32.102.141").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("5.196.65.184").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("89.163.239.219").expect("could not parse bootstrap ip address"),
-        PeerAddress::from_str("165.227.36.71").expect("could not parse bootstrap ip address"),
+        PeerAddress::from_str("australia.signum.network:8123")
+            .expect("could not parse bootstrap ip address `australia.signum.network:8123`"),
+        PeerAddress::from_str("brazil.signum.network:8123")
+            .expect("could not parse bootstrap ip address `brazil.signum.network:8123`"),
+        PeerAddress::from_str("canada.signum.network:8123")
+            .expect("could not parse bootstrap ip address `canada.signum.network:8123`"),
+        PeerAddress::from_str("europe.signum.network:8123")
+            .expect("could not parse bootstrap ip address `europe.signum.network:8123`"),
+        PeerAddress::from_str("europe1.signum.network:8123")
+            .expect("could not parse bootstrap ip address `europe1.signum.network:8123`"),
+        PeerAddress::from_str("europe2.signum.network:8123")
+            .expect("could not parse bootstrap ip address `europe2.signum.network:8123`"),
+        PeerAddress::from_str("europe3.signum.network:8123")
+            .expect("could not parse bootstrap ip address `europe3.signum.network:8123`"),
+        PeerAddress::from_str("latam.signum.network:8123")
+            .expect("could not parse bootstrap ip address `latam.signum.network:8123`"),
+        PeerAddress::from_str("singapore.signum.network:8123")
+            .expect("could not parse bootstrap ip address `singapore.signum.network:8123`"),
+        PeerAddress::from_str("ru.signum.network:8123")
+            .expect("could not parse bootstrap ip address `ru.signum.network:8123`"),
+        PeerAddress::from_str("us-central.signum.network:8123")
+            .expect("could not parse bootstrap ip address `us-central.signum.network:8123`"),
+        PeerAddress::from_str("us-east.signum.network:8123")
+            .expect("could not parse bootstrap ip address `us-east.signum.network:8123`"),
     ]
 }
 
