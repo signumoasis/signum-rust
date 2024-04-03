@@ -3,6 +3,7 @@ use std::str::FromStr;
 use serde::Deserialize;
 use surrealdb::{
     engine::any::{self, Any},
+    opt::auth::Root,
     Surreal,
 };
 
@@ -60,7 +61,19 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     pub async fn get_db(&self) -> Result<Surreal<Any>, anyhow::Error> {
-        let db = any::connect(format!("speedb:{}", self.filename)).await?;
+        let db = any::connect(&self.filename).await?;
+        // let db = any::connect(format!("speedb:{}", self.filename)).await?;
+
+        if !&self.filename.starts_with("speedb:")
+            && !self.filename.starts_with("file:")
+            && !&self.filename.starts_with("mem:")
+        {
+            db.signin(Root {
+                username: "root",
+                password: "root",
+            })
+            .await?;
+        }
 
         let namespace = "signum";
         let database = "signum";
