@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
@@ -81,35 +81,35 @@ pub async fn update_db_peer_info(database: Surreal<Any>, peer: PeerAddress) -> R
             // TODO: Consider removing this to avoid deblacklisting a peer providing bad blocks
             deblacklist_peer(database, peer).await?;
         }
-        Err(GetPeerInfoError::MissingAnnouncedAddress(_)) => {
-            tracing::warn!(
-                "Peer {} has no 'announcedAddress' configured. Blacklisting.",
-                &peer
-            );
-            blacklist_peer(database, peer).await?;
-        }
-        Err(GetPeerInfoError::UnexpectedError(e)) => {
-            tracing::error!("Problem getting peer info for {}: {:?}", &peer, e);
-            increment_attempts_since_last_seen(database, peer).await?;
-        }
         Err(GetPeerInfoError::ConnectionError(e)) => {
-            tracing::warn!(
-                "Connection error to peer {}. Blacklisting. Caused by:\n\t{}",
-                &peer,
-                e
-            );
-            tracing::trace!("Connection error for {}: Caused by:\n\t{:#?}", &peer, e);
+            tracing::warn!("Connection error to peer {}. Blacklisting.", &peer,);
+            tracing::debug!("Connection error for {}: Caused by:\n\t{:#?}", &peer, e);
             increment_attempts_since_last_seen(database.clone(), peer.clone()).await?;
-            // TODO: Consider only blacklisting after several consecutive bad attempts. 120 minutes?
             blacklist_peer(database, peer).await?;
         }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
             tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
-            tracing::trace!("Timeout caused by: {:#?}", e);
+            tracing::debug!("Connection timeout for {}. Caused by: \n\t{:#?}", &peer, e);
 
             increment_attempts_since_last_seen(database.clone(), peer.clone()).await?;
-            // TODO: Consider only blacklisting after several consecutive bad attempts. 120 minutes?
             blacklist_peer(database, peer).await?;
+        }
+        Err(GetPeerInfoError::ContentDecodeError(e)) => {
+            tracing::warn!(
+                "Peer {} response could not be properly decoded. Blacklisting peer.",
+                &peer,
+            );
+            tracing::debug!("Peer {} decoding error. Caused by:\n\t{:#?}", &peer, e);
+            blacklist_peer(database, peer).await?;
+        }
+        Err(GetPeerInfoError::UnexpectedError(e)) => {
+            tracing::error!(
+                "Problem getting peer info for {}. Caused by:\n\t{:#?}",
+                &peer,
+                e
+            );
+
+            increment_attempts_since_last_seen(database, peer).await?;
         }
     }
 
@@ -171,19 +171,26 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
         )),
     }?;
 
-    //TODO: Think about letting this be optional here and fix it in the future requests
     let peer_ip = response
         .remote_addr()
         .ok_or_else(|| anyhow::anyhow!("peer response did not have an IP address"))?
         .ip()
         .to_string();
 
-    tracing::trace!("Found IP address {} for PeerAddress {}", &peer_ip, &peer);
+    tracing::trace!("found ip address {} for PeerAddress {}", &peer_ip, &peer);
 
-    let peer_info = match response.json::<PeerInfo>().await {
+    let mut peer_info = match response.json::<PeerInfo>().await {
         Ok(i) => Ok(i),
-        Err(e) => Err(GetPeerInfoError::MissingAnnouncedAddress(e)),
+        Err(e) if e.is_decode() => Err(GetPeerInfoError::ContentDecodeError(e)),
+        Err(e) => Err(GetPeerInfoError::UnexpectedError(
+            Err(e).context("could not convert body to PeerInfo")?,
+        )),
     }?;
+
+    // Use the peer ip if there is no announced_address
+    if peer_info.announced_address.is_none() {
+        peer_info.announced_address = Some(PeerAddress::from_str(&peer_ip)?);
+    }
 
     Ok((peer_info, peer_ip))
 }
@@ -191,7 +198,7 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
 #[derive(thiserror::Error)]
 pub enum GetPeerInfoError {
     #[error("Missing announced address: {0}")]
-    MissingAnnouncedAddress(#[source] reqwest::Error),
+    ContentDecodeError(#[source] reqwest::Error),
     #[error("Connection error {0}")]
     ConnectionError(#[source] reqwest::Error),
     #[error("Connection timeout {0}")]
