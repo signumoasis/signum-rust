@@ -69,6 +69,7 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
         peer_address
     } else {
         // Try address from bootstrap
+        //TODO: Make this a random selection instead of just taking the first one.
         let peer = settings
             .p2p
             .bootstrap_peers
