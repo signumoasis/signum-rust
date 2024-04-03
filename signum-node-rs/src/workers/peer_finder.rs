@@ -34,8 +34,6 @@ pub async fn run_peer_finder_forever(database: Surreal<Any>, settings: Settings)
 /// peers list.
 #[tracing::instrument(name = "Peer Finder", skip_all)]
 pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<()> {
-    tracing::info!("Seeking new peers");
-
     // Try to get random peer from database
     let mut response = database
         .query(
@@ -79,7 +77,7 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
         peer.to_owned()
     };
 
-    tracing::debug!("Randomly chosen peer is {}", peer_address);
+    tracing::info!("Seeking new peers from {}", peer_address);
     // Next, send a request to that peer asking for its peers list.
     let peers = get_peers(peer_address)
         .await
