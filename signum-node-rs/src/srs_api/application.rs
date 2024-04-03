@@ -24,13 +24,6 @@ impl SrsApiApplication {
         configuration: Settings,
         database: Surreal<Any>,
     ) -> Result<Self, anyhow::Error> {
-        // let connection_pool = get_connection_pool(&configuration.database)?;
-        // let database = configuration
-        //     .database
-        //     .get_db()
-        //     .await
-        //     .context("could not get database connection")?;
-
         let address = format!(
             "{}:{}",
             configuration.srs_api.listen_address, configuration.srs_api.listen_port
