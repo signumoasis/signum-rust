@@ -1,3 +1,4 @@
+use crate::models::p2p::ExchangeableTransaction;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
