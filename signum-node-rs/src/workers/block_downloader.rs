@@ -1,15 +1,11 @@
 use anyhow::Result;
 use std::time::Duration;
-use surrealdb::{engine::any::Any, Surreal};
 use tracing::Instrument;
 use uuid::Uuid;
 
-use crate::configuration::Settings;
+use crate::{configuration::Settings, models::datastore::Datastore};
 
-pub async fn run_block_downloader_forever(
-    database: Surreal<Any>,
-    settings: Settings,
-) -> Result<()> {
+pub async fn run_block_downloader_forever(database: Datastore, settings: Settings) -> Result<()> {
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(
@@ -31,7 +27,10 @@ pub async fn run_block_downloader_forever(
 /// If no peers exist in the database, it will read from the configuration bootstrap
 /// peers list.
 #[tracing::instrument(name = "Block Downloader", skip_all)]
-pub async fn block_downloader(database: Surreal<Any>, settings: Settings) -> Result<()> {
-    tracing::info!("Block Downloader Tick");
+pub async fn block_downloader(_database: Datastore, _settings: Settings) -> Result<()> {
+    tracing::info!("Downloading a block");
+    // let client = reqwest::Client::new();
+    //
+    // let response = client.post();
     Ok(())
 }

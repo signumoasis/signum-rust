@@ -7,7 +7,7 @@ use surrealdb::{
     Surreal,
 };
 
-use crate::models::p2p::PeerAddress;
+use crate::models::{datastore::Datastore, p2p::PeerAddress};
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     // Get the base execution director
@@ -61,7 +61,7 @@ pub struct DatabaseSettings {
 
 impl DatabaseSettings {
     #[tracing::instrument(skip_all)]
-    pub async fn get_db(&self) -> Result<Surreal<Any>, anyhow::Error> {
+    pub async fn get_db(&self) -> Result<Datastore, anyhow::Error> {
         let db = any::connect(&self.filename).await?;
         // let db = any::connect(format!("speedb:{}", self.filename)).await?;
 
@@ -90,7 +90,7 @@ impl DatabaseSettings {
         tracing::info!("Initializing database");
         let db = initialize_database(db).await?;
 
-        Ok(db)
+        Ok(Datastore::new(db))
     }
 }
 

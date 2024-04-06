@@ -5,12 +5,12 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use surrealdb::{engine::any::Any, Surreal};
 use tracing_actix_web::TracingLogger;
 
 use crate::{
     configuration::{PeerToPeerSettings, Settings},
     health_check,
+    models::datastore::Datastore,
     srs_api::signum_api_handler,
 };
 
@@ -22,7 +22,7 @@ pub struct SrsApiApplication {
 impl SrsApiApplication {
     pub async fn build(
         configuration: Settings,
-        database: Surreal<Any>,
+        database: Datastore,
     ) -> Result<Self, anyhow::Error> {
         let address = format!(
             "{}:{}",
@@ -60,7 +60,7 @@ pub struct ApplicationBaseUrl(pub String);
 
 async fn run(
     listener: TcpListener,
-    db: Surreal<Any>,
+    db: Datastore,
     base_url: String,
     p2p_settings: PeerToPeerSettings,
 ) -> Result<Server, anyhow::Error> {

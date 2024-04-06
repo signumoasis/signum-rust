@@ -1,17 +1,16 @@
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use surrealdb::{engine::any::Any, Surreal};
 use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
     configuration::Settings,
-    models::p2p::PeerAddress,
+    models::datastore::Datastore,
     peers::{get_peers, update_db_peer_info},
 };
 
-pub async fn run_peer_finder_forever(database: Surreal<Any>, settings: Settings) -> Result<()> {
+pub async fn run_peer_finder_forever(database: Datastore, settings: Settings) -> Result<()> {
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(
@@ -33,36 +32,12 @@ pub async fn run_peer_finder_forever(database: Surreal<Any>, settings: Settings)
 /// If no peers exist in the database, it will read from the configuration bootstrap
 /// peers list.
 #[tracing::instrument(name = "Peer Finder", skip_all)]
-pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<()> {
+pub async fn peer_finder(mut database: Datastore, settings: Settings) -> Result<()> {
     // Try to get random peer from database
-    let mut response = database
-        .query(
-            r#"
-                SELECT announced_address
-                FROM ONLY peer
-                WHERE blacklist.until IS none
-                    OR blacklist.until < time::now()
-                ORDER BY rand()
-                LIMIT 1
-            "#,
-        )
-        .await?;
-
-    // Check if we were able to get a row
-    let peer_address = response
-        .take::<Option<PeerAddress>>("announced_address")
-        .unwrap_or(None);
-
-    // Extract the first element of the vec
-    // let peer_address = if let Ok(the_vec) = result {
-    //     the_vec.first().cloned()
-    // } else {
-    //     tracing::debug!("Couldn't get valid peer from database.");
-    //     None
-    // };
+    let peer_address = database.get_random_peer().await;
 
     // Check if we got a row AND were able to parse it
-    let peer_address = if let Some(peer_address) = peer_address {
+    let peer_address = if let Ok(peer_address) = peer_address {
         // Use address from database
         peer_address
     } else {
@@ -86,17 +61,7 @@ pub async fn peer_finder(database: Surreal<Any>, settings: Settings) -> Result<(
     let mut new_peers_count = 0;
     for peer in peers {
         tracing::trace!("Trying to save peer {}", peer);
-        let response = database
-            .query(
-                r#"
-                CREATE peer
-                CONTENT {
-                    announced_address: $announced_address
-                }
-            "#,
-            )
-            .bind(("announced_address", &peer))
-            .await;
+        let response = database.create_new_peer(&peer).await;
 
         match response {
             Ok(mut r) => {

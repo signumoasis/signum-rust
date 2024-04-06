@@ -1,13 +1,12 @@
 use std::time::Duration;
 
-use anyhow::{Context, Result};
-use surrealdb::{engine::any::Any, Surreal};
+use anyhow::Result;
 use tracing::Instrument;
 use uuid::Uuid;
 
-use crate::{models::p2p::PeerAddress, peers::update_db_peer_info};
+use crate::{models::datastore::Datastore, peers::update_db_peer_info};
 
-pub async fn run_peer_info_trader_forever(database: Surreal<Any>) -> Result<()> {
+pub async fn run_peer_info_trader_forever(database: Datastore) -> Result<()> {
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(
@@ -25,22 +24,11 @@ pub async fn run_peer_info_trader_forever(database: Surreal<Any>) -> Result<()> 
 /// Gets info from peer nodes and stores it.
 /// Simultaneously supplies this node's info to the peers it contacts.
 #[tracing::instrument(name = "Peer Info Trader", skip_all)]
-pub async fn peer_info_trader(database: Surreal<Any>) -> Result<()> {
+pub async fn peer_info_trader(database: Datastore) -> Result<()> {
     // Get all peers from the database that haven't been seen in 1 minute
-    let mut response = database
-        .query(
-            r#"
-            SELECT announced_address
-            FROM peer
-            WHERE
-                blacklist.until IS NULL OR blacklist.until < time::now()
-                AND (last_seen is NONE OR last_seen is NULL OR last_seen < time::now() + 1m)
-        "#,
-        )
-        .await
-        .context("unable to fetch peers from the database")?;
-
-    let peers = response.take::<Vec<PeerAddress>>("announced_address")?;
+    let peers = database
+        .get_peers_last_seen_before(Duration::from_secs(60))
+        .await?;
 
     tracing::info!("Refreshing {} known peers", &peers.len());
 
