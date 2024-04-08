@@ -1,5 +1,10 @@
 # signum-rs
 
+## Pre-requisites to Compile
+
+You must have Clang compiler installed tpo build this project
+It is required by the speedb crate.
+
 ## Design
 
 A single executable file that contains all the logic required to be a full node, however it will respond to switches at launch time that can determine whether or not it activates portions of the code, giving the ability to launch the exe similarly to `./signum-rs -blockprocessor` to only launch the block processing module and the portion of the GRPC API required to communicate to that module. Each of the portions of the code will be contained as an actor, designed to only do one particular job.
