@@ -1,0 +1,128 @@
+nushell command:
+(($nodedata | select announced_address lifetime downtime availability created_at) | each {|e| let age = (date now) - ($e.created_at | into datetime); let availability = (1 - ($e.downtime / $e.lifetime)) * 100 ;let reliability_score = (($age * $age_factor) | format duration sec | split row ' ' | get 0 | into int) + ($availability * $avail_factor); return {announced_address: $e.announced_address, lifetime:$e.lifetime, downtime:$e.downtime, availability:$availability, age: $age, reliability_score: $reliability_score }}) | sort-by reliability_score --reverse
+
+Formula: (availability * x) + (age_in_seconds * y)
+x: 1000
+y: 0.001
+
+╭─────┬────────────────────────────────────┬──────────┬──────────┬──────────────┬──────────────────────────────────────────────┬───────────────────╮
+│   # │         announced_address          │ lifetime │ downtime │ availability │                     age                      │ reliability_score │
+├─────┼────────────────────────────────────┼──────────┼──────────┼──────────────┼──────────────────────────────────────────────┼───────────────────┤
+│   0 │ p2p.notallmine.net:8080            │    20260 │       39 │        99.81 │ 32wk 2day 19hr 24min 12sec 999ms 208µs 600ns │         119403.50 │
+│   1 │ europe2.signum.network             │    20260 │      155 │        99.23 │  32wk 2day 19hr 24min 12sec 961ms 84µs 600ns │         118830.95 │
+│   2 │ 188.34.159.176                     │    20260 │      212 │        98.95 │ 32wk 2day 19hr 24min 12sec 771ms 667µs 800ns │         118549.60 │
+│   3 │ lootboy.signum.network             │    20260 │      224 │        98.89 │ 32wk 2day 19hr 24min 12sec 434ms 187µs 800ns │         118490.37 │
+│   4 │ brazil.signum.network              │    20260 │      253 │        98.75 │ 32wk 2day 19hr 24min 12sec 948ms 919µs 500ns │         118347.23 │
+│   5 │ storjserver2.cryptomass.de         │    20259 │      286 │        98.59 │   32wk 2day 19hr 23min 4sec 53ms 522µs 500ns │         118184.28 │
+│   6 │ 82.66.177.107                      │    20260 │      394 │        98.06 │ 32wk 2day 19hr 24min 12sec 896ms 331µs 700ns │         117651.28 │
+│   7 │ europe3.signum.network             │    20260 │      405 │        98.00 │       32wk 2day 19hr 24min 12sec 980ms 105µs │         117596.99 │
+│   8 │ canada.signum.network              │    20260 │      419 │        97.93 │         32wk 2day 19hr 24min 13sec 7ms 961µs │         117527.89 │
+│   9 │ europe.signum.network              │    20260 │      474 │        97.66 │  32wk 2day 19hr 24min 12sec 968ms 43µs 200ns │         117256.41 │
+│  10 │ 213.29.28.253                      │    20260 │      514 │        97.46 │ 32wk 2day 19hr 24min 12sec 662ms 820µs 300ns │         117058.98 │
+│  11 │ europe1.signum.network             │    20260 │      550 │        97.29 │  32wk 2day 19hr 24min 12sec 974ms 63µs 900ns │         116881.29 │
+│  12 │ ru.signum.network                  │    20260 │      578 │        97.15 │ 32wk 2day 19hr 24min 12sec 578ms 270µs 400ns │         116743.09 │
+│  13 │ australia.signum.network           │    20260 │      657 │        96.76 │       32wk 2day 19hr 24min 12sec 853ms 857µs │         116353.16 │
+│  14 │ 68.14.33.18                        │    20260 │      804 │        96.03 │ 32wk 2day 19hr 24min 12sec 727ms 161µs 300ns │         115627.59 │
+│  15 │ 95.84.195.90                       │    20260 │      815 │        95.98 │ 32wk 2day 19hr 24min 12sec 684ms 794µs 700ns │         115573.30 │
+│  16 │ 84.54.46.176                       │    20259 │      979 │        95.17 │  32wk 2day 19hr 23min 3sec 990ms 374µs 300ns │         114763.58 │
+│  17 │ 89.58.10.207                       │    20260 │      999 │        95.07 │ 32wk 2day 19hr 24min 12sec 833ms 458µs 200ns │         114665.10 │
+│  18 │ 91.203.178.205                     │    17560 │      516 │        97.06 │  28wk 1day 2hr 37min 28sec 140ms 542µs 400ns │         114091.50 │
+│  19 │ 95.208.28.23                       │    18398 │      708 │        96.15 │         29wk 3day 7hr 28min 38sec 13ms 753µs │         113976.76 │
+│  20 │ 195.246.110.92                     │    20260 │     1180 │        94.18 │ 32wk 2day 19hr 24min 12sec 732ms 755µs 600ns │         113771.72 │
+│  21 │ 95.31.254.90                       │    20260 │     1185 │        94.15 │ 32wk 2day 19hr 24min 12sec 742ms 774µs 100ns │         113747.04 │
+│  22 │ singapore.signum.network           │    20260 │     1222 │        93.97 │ 32wk 2day 19hr 24min 12sec 880ms 502µs 100ns │         113564.41 │
+│  23 │ signum.zip:8880                    │    20195 │     1227 │        93.92 │   32wk 2day 3hr 37min 6sec 552ms 398µs 800ns │         113463.24 │
+│  24 │ 95.170.179.137                     │    20260 │     1291 │        93.63 │ 32wk 2day 19hr 24min 12sec 413ms 732µs 400ns │         113223.84 │
+│  25 │ taylorforce.synology.me            │    20260 │     1380 │        93.19 │ 32wk 2day 19hr 24min 12sec 504ms 542µs 800ns │         112784.55 │
+│  26 │ signum.cryptocable.eu              │    14313 │      194 │        98.64 │       23wk 11hr 21min 7sec 586ms 311µs 300ns │         112595.59 │
+│  27 │ 178.214.46.244                     │    20260 │     1455 │        92.82 │ 32wk 2day 19hr 24min 12sec 708ms 645µs 700ns │         112414.36 │
+│  28 │ cbnode.ddns.net                    │    20260 │     1504 │        92.58 │ 32wk 2day 19hr 24min 12sec 422ms 981µs 500ns │         112172.51 │
+│  29 │ 84.220.233.188                     │    17914 │      979 │        94.54 │ 28wk 4day 23hr 42min 18sec 111ms 353µs 300ns │         111900.00 │
+│  30 │ cnode.bit-cloud.de                 │    13923 │      261 │        98.13 │                 22wk 1day 5hr 4min 577ms 2µs │         111535.40 │
+│  31 │ 90.89.172.248                      │    17348 │     1021 │        94.11 │ 27wk 5day 18hr 52min 26sec 849ms 479µs 100ns │         110943.60 │
+│  32 │ us-east.signum.network             │    12006 │      106 │        99.12 │   19wk 1day 3hr 25min 2sec 298ms 583µs 800ns │         110706.11 │
+│  33 │ 4.233.61.8                         │    20260 │     1832 │        90.96 │        32wk 2day 19hr 24min 12sec 918ms 13µs │         110553.55 │
+│  34 │ 31.129.166.25                      │    20260 │     1851 │        90.86 │ 32wk 2day 19hr 24min 12sec 570ms 948µs 400ns │         110459.77 │
+│  35 │ 78.142.26.26                       │    20259 │     1964 │        90.31 │  32wk 2day 19hr 23min 4sec 260ms 245µs 300ns │         109901.54 │
+│  36 │ 91.132.21.197                      │    20260 │     2048 │        89.89 │ 32wk 2day 19hr 24min 12sec 496ms 521µs 400ns │         109487.41 │
+│  37 │ 31.15.150.16                       │    18573 │     1602 │        91.37 │  29wk 5day 5hr 33min 56sec 305ms 969µs 900ns │         109365.58 │
+│  38 │ 91.232.30.88                       │    20260 │     2097 │        89.65 │ 32wk 2day 19hr 24min 12sec 345ms 563µs 500ns │         109245.56 │
+│  39 │ wekuz-signa-node.duckdns.org       │    12909 │      670 │        94.81 │  20wk 4day 1hr 40min 19sec 266ms 624µs 900ns │         107256.82 │
+│  40 │ pool.ravefusions.com               │     7311 │        9 │        99.88 │  11wk 3day 2hr 16min 22sec 952ms 249µs 900ns │         106796.90 │
+│  41 │ 35.137.144.207                     │     8279 │      149 │        98.20 │ 12wk 6day 23hr 34min 56sec 693ms 991µs 600ns │         106060.27 │
+│  42 │ signum1.tech-io.nl                 │    20260 │     2755 │        86.40 │ 32wk 2day 19hr 24min 12sec 695ms 419µs 700ns │         105997.78 │
+│  43 │ 177.153.50.43                      │     7411 │       84 │        98.87 │  11wk 4day 5hr 16min 51sec 356ms 623µs 100ns │         105883.55 │
+│  44 │ 92.54.90.226                       │     6562 │       45 │        99.31 │ 10wk 1day 15hr 36min 56sec 672ms 584µs 700ns │         105504.23 │
+│  45 │ p2p.signumoasis.xyz:80             │     7224 │      114 │        98.42 │  11wk 2day 2hr 45min 30sec 837ms 229µs 300ns │         105256.93 │
+│  46 │ latam.signum.network               │     5721 │        8 │        99.86 │   8wk 6day 4hr 31min 55sec 625ms 167µs 100ns │         105233.16 │
+│  47 │ 85.238.97.205                      │    20260 │     2964 │        85.37 │ 32wk 2day 19hr 24min 12sec 617ms 395µs 100ns │         104966.19 │
+│  48 │ wallet.signa-coin.eu               │    20260 │     3046 │        84.97 │ 32wk 2day 19hr 24min 12sec 447ms 604µs 200ns │         104561.45 │
+│  49 │ 62.80.164.205                      │    20260 │     3080 │        84.80 │ 32wk 2day 19hr 24min 12sec 461ms 140µs 300ns │         104393.63 │
+│  50 │ 173.212.224.130                    │    20260 │     3471 │        82.87 │ 32wk 2day 19hr 24min 12sec 454ms 485µs 900ns │         102463.72 │
+│  51 │ 77.37.234.32                       │    20260 │     3502 │        82.71 │ 32wk 2day 19hr 24min 12sec 427ms 224µs 400ns │         102310.71 │
+│  52 │ 81.217.208.248                     │    13213 │     1464 │        88.92 │       21wk 9hr 38min 53sec 376ms 307µs 500ns │         101655.00 │
+│  53 │ 96.233.70.199                      │     2649 │       22 │        99.17 │        4wk 14hr 3min 54sec 609ms 815µs 300ns │         101638.50 │
+│  54 │ 46.29.113.114                      │    11010 │     1040 │        90.55 │         17wk 4day 4hr 33min 19sec 770ms 56µs │         101197.04 │
+│  55 │ 216.114.232.67:28123               │     1019 │        0 │          100 │  1wk 3day 20hr 25min 25sec 960ms 862µs 900ns │            100937 │
+│  56 │ 216.114.232.67:18123               │     1054 │        1 │        99.91 │   1wk 4day 5hr 33min 35sec 255ms 841µs 500ns │         100875.12 │
+│  57 │ 151.93.68.246                      │     2493 │       37 │        98.52 │  3wk 5day 21hr 17min 25sec 215ms 439µs 200ns │         100838.84 │
+│  58 │ 47.36.24.16                        │     7425 │      462 │        93.78 │    11wk 4day 9hr 3min 30sec 753ms 77µs 400ns │         100808.78 │
+│  59 │ 198.48.220.38                      │      203 │        0 │          100 │      1day 21hr 52min 38sec 125ms 777µs 200ns │            100165 │
+│  60 │ zarrsdomain.diskstation.eu         │      182 │        0 │          100 │            1day 16hr 22min 58sec 142ms 666µs │            100145 │
+│  61 │ fuchsnas.synology.me               │    20260 │     3943 │        80.54 │ 32wk 2day 19hr 24min 12sec 606ms 125µs 600ns │         100134.01 │
+│  62 │ 5.12.240.65                        │       63 │        0 │          100 │            8hr 44min 54sec 349ms 119µs 800ns │            100031 │
+│  63 │ 175.156.128.210                    │       30 │        0 │          100 │                 7min 10sec 259ms 577µs 100ns │            100000 │
+│  64 │ 216.114.232.67:38123               │      428 │        2 │        99.53 │       4day 9hr 17min 27sec 704ms 884µs 200ns │          99911.71 │
+│  65 │ 89.217.152.11                      │     6428 │      402 │        93.75 │       10wk 3hr 28min 48sec 255ms 416µs 100ns │          99806.11 │
+│  66 │ austria-sn.albatros.cc             │    12030 │     1616 │        86.57 │  19wk 1day 9hr 44min 17sec 313ms 877µs 600ns │          98178.92 │
+│  67 │ 80.219.19.73                       │    15101 │     2700 │        82.12 │  24wk 2day 3hr 13min 37sec 774ms 286µs 800ns │          96819.39 │
+│  68 │ twoschnauzers.ddns.net             │    13613 │     2252 │        83.46 │ 21wk 4day 19hr 18min 26sec 114ms 563µs 300ns │          96571.99 │
+│  69 │ 93.55.82.222                       │     8751 │     1068 │        87.80 │        14wk 1hr 29min 9sec 717ms 669µs 400ns │          96267.68 │
+│  70 │ signumwallet.lucentinian.com       │     7645 │      859 │        88.76 │  11wk 6day 20hr 20min 9sec 256ms 460µs 900ns │          96007.90 │
+│  71 │ 194.113.32.31                      │    12697 │     2173 │        82.89 │       20wk 1day 17hr 27min 43sec 216ms 734µs │          95130.72 │
+│  72 │ signum.littlespynetwork.eu         │    13599 │     2446 │        82.01 │ 21wk 4day 15hr 20min 23sec 539ms 357µs 300ns │          95114.38 │
+│  73 │ btfg.space                         │     5721 │      624 │        89.09 │   8wk 6day 4hr 31min 55sec 441ms 940µs 100ns │          94465.82 │
+│  74 │ 173.249.63.9                       │     4971 │      530 │        89.34 │        7wk 5day 16min 2sec 256ms 508µs 500ns │          94004.16 │
+│  75 │ 216.222.169.149                    │    11709 │     2305 │        80.31 │ 18wk 4day 20hr 49min 13sec 445ms 905µs 800ns │          91620.29 │
+│  76 │ 71.244.109.187                     │    10917 │     2120 │        80.58 │   17wk 3day 4hr 3min 34sec 727ms 203µs 300ns │          91135.75 │
+│  77 │ 174.160.96.195                     │     4126 │      550 │        86.67 │         6wk 2day 16hr 43sec 51ms 553µs 700ns │          90528.90 │
+│  78 │ 93.227.218.93                      │      328 │       32 │        90.24 │        3day 7hr 7min 57sec 172ms 647µs 700ns │          90527.90 │
+│  79 │ beschtenode.duckdns.org            │     6533 │     1035 │        84.16 │  10wk 1day 7hr 47min 26sec 204ms 898µs 500ns │          90319.35 │
+│  80 │ 124.246.79.194                     │     3540 │      577 │        83.70 │         5wk 3day 6hr 50min 20sec 793ms 367µs │          87007.56 │
+│  81 │ 78.154.189.111                     │      713 │      107 │        84.99 │             1wk 12hr 33min 12sec 251ms 266µs │          85641.99 │
+│  82 │ 193.164.249.206                    │      641 │       99 │        84.56 │      6day 17hr 44min 58sec 220ms 711µs 700ns │          85137.38 │
+│  83 │ signumwallet.lucentinian.com:8120  │     5942 │     1269 │        78.64 │  9wk 1day 16hr 11min 52sec 925ms 481µs 400ns │          84230.55 │
+│  84 │ 106.110.228.221                    │      714 │      120 │        83.19 │             1wk 12hr 48min 50sec 387ms 175µs │          83843.28 │
+│  85 │ signumnode.mywire.org              │      366 │       63 │        82.79 │       3day 17hr 4min 34sec 836ms 440µs 200ns │          83106.89 │
+│  86 │ 124.154.7.5                        │     6176 │     1472 │        76.17 │   9wk 4day 7hr 27min 28sec 173ms 286µs 200ns │          81980.80 │
+│  87 │ 91.122.105.234                     │    10361 │     2962 │        71.41 │  16wk 4day 1hr 14min 55sec 967ms 500µs 400ns │          81438.03 │
+│  88 │ zmail.cloudns.ph                   │    10083 │     2924 │        71.00 │      16wk 23hr 51min 48sec 733ms 687µs 100ns │          80762.69 │
+│  89 │ 46.216.185.47                      │      166 │       34 │        79.52 │       1day 12hr 11min 11sec 954ms 34µs 500ns │          79648.07 │
+│  90 │ 89.56.116.201                      │     4366 │     1077 │        75.33 │           6wk 5day 6hr 40min 3sec 90ms 437µs │          79416.11 │
+│  91 │ 161.97.93.182                      │    20019 │     8122 │        59.43 │       32wk 4hr 23min 37sec 213ms 462µs 900ns │          78797.54 │
+│  92 │ 93.131.143.225                     │       94 │       20 │        78.72 │                 16hr 50min 34sec 409ms 606µs │          78783.40 │
+│  93 │ signum.mega-bit.ru                 │     1134 │      253 │        77.69 │         1wk 5day 2hr 27min 55sec 673ms 378µs │          78734.59 │
+│  94 │ 24.127.174.55                      │     2160 │      510 │        76.39 │          3wk 2day 6hr 11min 22sec 21ms 927µs │          78397.89 │
+│  95 │ 193.110.124.49                     │     2232 │      585 │        73.79 │    3wk 3day 1hr 6min 21sec 605ms 689µs 900ns │          75867.32 │
+│  96 │ zarrsdomain.crabdance.com          │     3610 │     1097 │        69.61 │    5wk 4day 1hr 9min 32sec 503ms 645µs 400ns │          72985.19 │
+│  97 │ ipsg.ddns.net                      │     5652 │     2123 │        62.44 │   8wk 5day 10hr 29min 36sec 68ms 146µs 300ns │          67746.08 │
+│  98 │ apsignode.ddns.net                 │     2637 │      932 │        64.66 │       4wk 10hr 55min 47sec 213ms 836µs 300ns │          67114.81 │
+│  99 │ 5.12.212.50                        │      392 │      139 │        64.54 │       3day 23hr 52min 11sec 216ms 98µs 500ns │          64885.82 │
+│ 100 │ signode.ddns.net                   │      921 │      375 │        59.28 │  1wk 2day 18hr 50min 29sec 424ms 290µs 800ns │          60128.39 │
+│ 101 │ daz-datamesh.ddns.net              │      972 │      414 │        57.41 │     1wk 3day 8hr 9min 15sec 795ms 22µs 600ns │          58300.41 │
+│ 102 │ signum.eyeshield-informatique.tech │    16371 │     9871 │        39.70 │   26wk 2day 1hr 43min 19sec 72ms 335µs 600ns │          55607.36 │
+│ 103 │ 71.178.51.159                      │     3952 │     2071 │        47.60 │             6wk 18hr 36min 27sec 488ms 182µs │          51291.15 │
+│ 104 │ 107.189.7.38                       │     5511 │     3105 │        43.66 │  8wk 3day 21hr 38min 25sec 381ms 254µs 500ns │          48833.14 │
+│ 105 │ 174.104.6.177                      │     4696 │     2744 │        41.57 │   7wk 1day 20hr 49min 21sec 60ms 531µs 300ns │          45961.29 │
+│ 106 │ 94.236.216.31                      │     7954 │     5498 │        30.88 │  12wk 3day 7hr 54min 45sec 756ms 711µs 600ns │          38422.55 │
+│ 107 │ 124.246.109.85                     │       86 │       54 │        37.21 │           14hr 45min 17sec 750ms 312µs 500ns │          37262.30 │
+│ 108 │ 212.54.108.95                      │       85 │       66 │        22.35 │           14hr 29min 38sec 390ms 798µs 500ns │          22404.94 │
+│ 109 │ 93.171.45.33                       │      500 │      404 │        19.20 │               5day 4hr 6min 4sec 447ms 627µs │          19646.00 │
+│ 110 │ 94.233.73.166                      │    20018 │    20004 │         0.07 │        32wk 4hr 7min 57sec 243ms 690µs 600ns │          19437.94 │
+│ 111 │ 175.156.151.227                    │      454 │      419 │         7.71 │        4day 16hr 5min 9sec 610ms 600µs 400ns │           8112.25 │
+│ 112 │ 124.246.92.227                     │      155 │      147 │         5.16 │       1day 9hr 18min 12sec 517ms 414µs 900ns │           5280.29 │
+│ 113 │ 124.246.120.27                     │      344 │      328 │         4.65 │      3day 11hr 19min 14sec 167ms 341µs 700ns │           4950.16 │
+│ 114 │ 124.246.89.150                     │      241 │      238 │         1.24 │       2day 7hr 49min 18sec 622ms 391µs 300ns │           1444.81 │
+├─────┼────────────────────────────────────┼──────────┼──────────┼──────────────┼──────────────────────────────────────────────┼───────────────────┤
+│   # │         announced_address          │ lifetime │ downtime │ availability │                     age                      │ reliability_score │
+╰─────┴────────────────────────────────────┴──────────┴──────────┴──────────────┴──────────────────────────────────────────────┴───────────────────╯
