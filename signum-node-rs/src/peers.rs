@@ -1,24 +1,34 @@
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
+use reqwest::Response;
+use serde_json::{json, Value};
 
 use crate::models::{
     datastore::Datastore,
     p2p::{PeerAddress, PeerInfo},
 };
 
-pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
-    let mut thebody = HashMap::new();
-    thebody.insert("protocol", "B1");
-    thebody.insert("requestType", "getPeers");
-
-    let peer_request = reqwest::Client::new()
+pub async fn post_peer_request(
+    peer: PeerAddress,
+    request_body: &Value,
+) -> Result<Response, anyhow::Error> {
+    reqwest::Client::new()
         .post(peer.to_url())
         .header("User-Agent", "BRS/3.8.0")
-        .json(&thebody)
+        .json(&request_body)
         .send()
-        .await?;
+        .await
+        .context("unable to send request")
+}
+pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
+    let thebody = json!({
+        "protocol": "B1",
+        "requestType": "getPeers",
+    });
+
+    let response = post_peer_request(peer, &thebody).await?;
 
     tracing::trace!("Parsing peers...");
     #[derive(Debug, serde::Deserialize)]
@@ -26,9 +36,9 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
         #[serde(rename = "peers")]
         peers: Vec<PeerAddress>,
     }
-    let response = peer_request.json::<PeerContainer>().await?;
-    tracing::trace!("Peers successfully parsed: {:#?}", &response);
-    Ok(response.peers)
+    let result = response.json::<PeerContainer>().await?;
+    tracing::trace!("Peers successfully parsed: {:#?}", &result);
+    Ok(result.peers)
 }
 
 /// Requests peer information from the the supplied PeerAddress. Updates the database
@@ -91,21 +101,17 @@ pub async fn update_db_peer_info(database: Datastore, peer: PeerAddress) -> Resu
 /// address of the peer.
 #[tracing::instrument]
 pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetPeerInfoError> {
-    let mut thebody = HashMap::new();
-    thebody.insert("protocol", "B1");
-    thebody.insert("requestType", "getInfo");
-    thebody.insert("announcedAddress", "nodomain.com");
-    thebody.insert("application", "BRS");
-    thebody.insert("version", "3.8.0");
-    thebody.insert("platform", "signum-rs");
-    thebody.insert("shareAddress", "false");
+    let thebody = json!({
+        "protocol": "B1",
+        "requestType": "getInfo",
+        "announcedAddress": "nodomain.com",
+        "application": "BRS",
+        "version": "3.8.0",
+        "platform": "signum-rs",
+        "shareAddress": "false",
+    });
 
-    let response = reqwest::Client::new()
-        .post(peer.to_url())
-        .header("User-Agent", "BRS/3.8.0")
-        .json(&thebody)
-        .send()
-        .await;
+    let response = post_peer_request(peer, &thebody).await;
 
     let response = match response {
         Ok(r) => Ok(r),
