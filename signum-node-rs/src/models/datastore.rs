@@ -153,6 +153,39 @@ impl Datastore {
         Ok(peer_address.ok_or_else(|| anyhow::anyhow!("no random address could be found"))?)
     }
 
+    /// Returns up to the requested number of random [`PeerAddress`]es from the database.
+    ///
+    /// Returns an error if there was a problem or if there are no peers in the database.
+    pub async fn get_n_random_peers(
+        &mut self,
+        number: u32,
+    ) -> Result<Vec<PeerAddress>, DatastoreError> {
+        let mut response = self
+            .db
+            .query(
+                r#"
+                SELECT announced_address
+                FROM peer
+                WHERE blacklist.until IS none
+                    OR blacklist.until < time::now()
+                ORDER BY rand()
+                LIMIT $number
+            "#,
+            )
+            .bind(("number", number))
+            .await
+            .context("unable to get random peers from the database")?;
+
+        // Check if we were able to get a row
+        let peer_address = response
+            .take::<Vec<PeerAddress>>("announced_address")
+            .context("unable to deserialize the peer from the response")?;
+        if peer_address.is_empty() {
+            return Err(anyhow::anyhow!("no random addresses could be found"))?;
+        }
+        Ok(peer_address)
+    }
+
     /// Increments the number of attempts to contact a peer since a peer was last seen.
     pub async fn increment_attempts_since_last_seen(
         &self,
