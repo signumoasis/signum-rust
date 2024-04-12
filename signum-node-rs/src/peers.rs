@@ -64,13 +64,15 @@ pub async fn update_db_peer_info(database: Datastore, peer: PeerAddress) -> Resu
             database.blacklist_peer(peer).await?;
         }
         Err(GetPeerInfoError::ConnectionTimeout(e)) => {
-            tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
+            // TODO: Blacklist only after a certain number of attempts_since_last_seen
+            // TODO: deblacklist on every 10th attempt since last seen to give it a chance again?
+            // tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
             tracing::debug!("Connection timeout for {}. Caused by: \n\t{:#?}", &peer, e);
 
             database
                 .increment_attempts_since_last_seen(peer.clone())
                 .await?;
-            database.blacklist_peer(peer).await?;
+            // database.blacklist_peer(peer).await?;
         }
         Err(GetPeerInfoError::ContentDecodeError(e)) => {
             tracing::warn!(
