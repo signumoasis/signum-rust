@@ -111,7 +111,7 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
         "shareAddress": "false",
     });
 
-    let response = post_peer_request(peer, &thebody).await;
+    let response = post_peer_request(peer.clone(), &thebody).await;
 
     let response = match response {
         Ok(r) => Ok(r),
