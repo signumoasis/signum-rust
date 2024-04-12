@@ -13,15 +13,15 @@ use crate::models::{
 pub async fn post_peer_request(
     peer: PeerAddress,
     request_body: &Value,
-) -> Result<Response, anyhow::Error> {
+) -> Result<Response, reqwest::Error> {
     reqwest::Client::new()
         .post(peer.to_url())
         .header("User-Agent", "BRS/3.8.0")
         .json(&request_body)
         .send()
         .await
-        .context("unable to send request")
 }
+
 pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
     let thebody = json!({
         "protocol": "B1",
