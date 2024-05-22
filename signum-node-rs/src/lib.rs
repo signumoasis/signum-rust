@@ -33,16 +33,23 @@ pub fn statistics_mode<T>(input: impl IntoIterator<Item = T>) -> Option<T>
 where
     T: std::fmt::Debug + std::hash::Hash + std::cmp::Eq,
 {
-    let frequencies = input.into_iter().counts();
-
-    let mut frequencies = frequencies.into_iter().max_set_by_key(|(_, count)| *count);
-    if frequencies.len() > 1 || frequencies.is_empty() {
-        return None;
-    };
-
-    let (thing, _) = frequencies.remove(0);
-
-    Some(thing)
+    input
+        // Get an iterator from the input
+        .into_iter()
+        // Create a hashmap containing the T as keys and the number of instances of T as values
+        .counts()
+        // Get an iterator from the new HashMap
+        .into_iter()
+        // Get the set of maximum numbers of items as a new Vec<(T, i32)>
+        .max_set_by_key(|(_, count)| *count)
+        // Get an iterator for the Vec
+        .into_iter()
+        // Return the item if only one exists or an Error
+        .exactly_one()
+        // Convert the Result into an Option
+        .ok()
+        // Map the (T, i32) to just T
+        .map(|(x, _)| x)
 }
 
 #[cfg(test)]
