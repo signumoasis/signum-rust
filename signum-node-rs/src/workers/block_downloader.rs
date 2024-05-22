@@ -40,7 +40,18 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     // * Determine highest block stored in DB
     // * Determine the mode of the highest cumulative difficulty
     //   of several or maybe all known peers
-    // * Build a list of peers with the discovered cumulative difficulty
+    // * Store highest cumulative difficulty.
+    // * Establish a FuturesOrdered
+    // * Loop through random peers, triggering download tasks if that peer matches the
+    // cumulative difficulty we have just stored, or higher, until we read the
+    // download instances limit
+    // * Store the download task in the FuturesOrdered
+    // * Loop
+    //      * call poll_next on the FuturesOrdered
+    //      * pop results
+    //      * check results for errors, requeue if error; consider dropping entire FuturesOrdered
+    //      and recreating it to dump now-defunct follow-on tasks
+    //      * push new download tasks, if needed and slots are available
     //
     // NOTES:
     // Things to keep track of:
@@ -97,5 +108,9 @@ async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: 
     }
     let response = peer_request.json::<PeerContainer>().await?;
     tracing::trace!("Peers successfully parsed: {:#?}", &response);
+    //TODO: Process the blocks just downloaded and return the correct Result
+    // - OK if all in this subchain are good
+    // - Connection error for any connectivity issues
+    // - Parse or Verification error for bad blocks
     Ok(())
 }
