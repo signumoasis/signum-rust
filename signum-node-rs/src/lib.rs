@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use actix_web::HttpResponse;
 use itertools::Itertools;
 
