@@ -1,5 +1,6 @@
 use anyhow::Result;
 use futures::stream::FuturesOrdered;
+use num_bigint::BigUint;
 use serde_json::json;
 use std::time::Duration;
 use tracing::Instrument;
@@ -61,12 +62,12 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     //
     let mut downloads = FuturesOrdered::new();
 
-    let _highest_cumulative_difficulty = 0u128;
+    let mut _highest_cumulative_difficulty = BigUint::ZERO;
     let peers = database.get_n_random_peers(5).await?;
 
     tracing::debug!("Random peers from db: {:#?}", &peers);
 
-    let mut cumulative_difficulties: Vec<u128> = Vec::new();
+    let mut cumulative_difficulties: Vec<BigUint> = Vec::new();
 
     for peer in peers {
         // Get cumulative difficulties to find the most common one
