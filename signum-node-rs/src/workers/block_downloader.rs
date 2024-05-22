@@ -88,26 +88,7 @@ async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: 
         "height": height,
         "numBlocks": number_of_blocks,
     });
-    // let mut thebody = HashMap::new();
-    // thebody.insert("protocol", "B1");
-    // thebody.insert("requestType", "getBlocksFromHeight");
-    // thebody.insert("height", height);
 
-    let peer_request = reqwest::Client::new()
-        .post(peer.to_url())
-        .header("User-Agent", "BRS/3.8.0")
-        .json(&thebody)
-        .send()
-        .await?;
-
-    tracing::trace!("Parsing peers...");
-    #[derive(Debug, serde::Deserialize)]
-    struct PeerContainer {
-        #[serde(rename = "peers")]
-        peers: Vec<PeerAddress>,
-    }
-    let response = peer_request.json::<PeerContainer>().await?;
-    tracing::trace!("Peers successfully parsed: {:#?}", &response);
     //TODO: Process the blocks just downloaded and return the correct Result
     // - OK if all in this subchain are good
     // - Connection error for any connectivity issues
