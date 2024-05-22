@@ -10,6 +10,7 @@ use crate::{
         datastore::Datastore,
         p2p::{B1Block, PeerAddress},
     },
+    peers::get_peer_cumulative_difficulty,
 };
 
 pub async fn run_block_downloader_forever(database: Datastore, settings: Settings) -> Result<()> {
@@ -53,9 +54,18 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
 
     tracing::debug!("Random peers from db: {:#?}", &peers);
 
-    let _cumulative_difficulties: Vec<u128> = Vec::new();
+    let mut cumulative_difficulties: Vec<u128> = Vec::new();
 
-    for _peer in peers {}
+    for peer in peers {
+        // Get cumulative difficulties to find the most common one
+        let cd = get_peer_cumulative_difficulty(peer).await?;
+        cumulative_difficulties.push(cd);
+    }
+
+    tracing::debug!(
+        "Hi 5 cumulative difficulties: {:#?}",
+        cumulative_difficulties
+    );
 
     Ok(())
 }

@@ -3,6 +3,7 @@ use std::str::FromStr;
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
 use reqwest::Response;
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::models::{
@@ -181,4 +182,45 @@ pub async fn blacklist_peer(database: Datastore, peer: PeerAddress) -> Result<()
 pub async fn deblacklist_peer(database: Datastore, peer: PeerAddress) -> Result<()> {
     let _response = database.deblacklist_peer(peer);
     Ok(())
+}
+
+/// Get the cumulative difficulty from the peer.
+pub async fn get_peer_cumulative_difficulty(peer: PeerAddress) -> Result<u128> {
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct CumulativeDifficultyResponse {
+        pub cumulative_difficulty: u128,
+        #[serde(rename = "blockchainHeight")]
+        pub _blockchain_height: u64,
+    }
+
+    let thebody = json!({
+        "protocol": "B1",
+        "requestType": "getCumulativeDifficulty",
+    });
+
+    let response = post_peer_request(peer.clone(), &thebody).await;
+
+    let response = match response {
+        Ok(r) => Ok(r),
+        Err(e) if e.is_connect() => Err(GetPeerInfoError::ConnectionError(e)),
+        Err(e) if e.is_timeout() => Err(GetPeerInfoError::ConnectionTimeout(e)),
+        Err(e) => Err(GetPeerInfoError::UnexpectedError(
+            Err(e).context("could not get a response")?,
+        )),
+    }?;
+
+    let values = match response.json::<CumulativeDifficultyResponse>().await {
+        Ok(i) => Ok(i),
+        Err(e) => Err(anyhow::anyhow!(
+            "Error getting cumulative difficulty: {:#?}",
+            e
+        )),
+        // Err(e) if e.is_decode() => Err(GetPeerInfoError::ContentDecodeError(e)),
+        // Err(e) => Err(GetPeerInfoError::UnexpectedError(
+        //     Err(e).context("could not convert body to CumulativeDifficultyResponse")?,
+        // )),
+    }?;
+
+    Ok(values.cumulative_difficulty)
 }
