@@ -33,10 +33,7 @@ pub fn statistics_mode<T>(input: impl IntoIterator<Item = T>) -> Option<T>
 where
     T: std::fmt::Debug + std::hash::Hash + std::cmp::Eq,
 {
-    let frequencies = input.into_iter().fold(HashMap::new(), |mut freqs, value| {
-        *freqs.entry(value).or_insert(0) += 1;
-        freqs
-    });
+    let frequencies = input.into_iter().counts();
 
     let mut frequencies = frequencies.into_iter().max_set_by_key(|(_, count)| *count);
     if frequencies.len() > 1 || frequencies.is_empty() {
