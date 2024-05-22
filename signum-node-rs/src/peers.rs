@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
+use num_bigint::BigUint;
 use reqwest::Response;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -185,13 +186,13 @@ pub async fn deblacklist_peer(database: Datastore, peer: PeerAddress) -> Result<
 }
 
 /// Get the cumulative difficulty from the peer.
-pub async fn get_peer_cumulative_difficulty(peer: PeerAddress) -> Result<u128> {
+pub async fn get_peer_cumulative_difficulty(peer: PeerAddress) -> Result<BigUint> {
     #[derive(Debug, Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct CumulativeDifficultyResponse {
-        pub cumulative_difficulty: u128,
-        #[serde(rename = "blockchainHeight")]
-        pub _blockchain_height: u64,
+        pub cumulative_difficulty: String,
+        // #[serde(rename = "blockchainheight")]
+        // pub _blockchain_height: u64,
     }
 
     let thebody = json!({
@@ -216,11 +217,10 @@ pub async fn get_peer_cumulative_difficulty(peer: PeerAddress) -> Result<u128> {
             "Error getting cumulative difficulty: {:#?}",
             e
         )),
-        // Err(e) if e.is_decode() => Err(GetPeerInfoError::ContentDecodeError(e)),
-        // Err(e) => Err(GetPeerInfoError::UnexpectedError(
-        //     Err(e).context("could not convert body to CumulativeDifficultyResponse")?,
-        // )),
     }?;
 
-    Ok(values.cumulative_difficulty)
+    let out = BigUint::from_str(&values.cumulative_difficulty)
+        .context("couldn't convert string to a BigUint")?;
+
+    Ok(out)
 }
