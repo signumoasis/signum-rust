@@ -4135,6 +4135,7 @@ dependencies = [
  "anyhow",
  "config",
  "console-subscriber",
+ "futures",
  "itertools 0.13.0",
  "num-bigint",
  "once_cell",
