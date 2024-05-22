@@ -81,8 +81,12 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     Ok(())
 }
 
-async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: u64) -> Result<()> {
-    let thebody = json!({
+async fn download_blocks_task(
+    _peer: PeerAddress,
+    height: u64,
+    number_of_blocks: u64,
+) -> Result<()> {
+    let _thebody = json!({
         "protocol": "B1",
         "requestType": "getBlocksFromHeight",
         "height": height,
