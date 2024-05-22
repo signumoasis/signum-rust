@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use futures::stream::FuturesOrdered;
 use num_bigint::BigUint;
 use serde_json::json;
@@ -8,11 +8,9 @@ use uuid::Uuid;
 
 use crate::{
     configuration::Settings,
-    models::{
-        datastore::Datastore,
-        p2p::{B1Block, PeerAddress},
-    },
+    models::{datastore::Datastore, p2p::PeerAddress},
     peers::get_peer_cumulative_difficulty,
+    statistics_mode,
 };
 
 pub async fn run_block_downloader_forever(database: Datastore, settings: Settings) -> Result<()> {
@@ -79,6 +77,33 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
         "Hi 5 cumulative difficulties: {:#?}",
         cumulative_difficulties
     );
+
+    _highest_cumulative_difficulty =
+        statistics_mode(cumulative_difficulties).unwrap_or(BigUint::ZERO);
+    tracing::debug!(
+        "Highest cumulative difficulty: {}",
+        _highest_cumulative_difficulty
+    );
+
+    //TODO: Do this in a loop, setting up appropriate sets
+    let peer = database
+        .get_random_peer()
+        .await
+        .context("couldn't get random peer from database")?;
+    let peer_cumulative_difficulty = get_peer_cumulative_difficulty(peer)
+        .await
+        .context("unable to get peer cumulative difficulty")?;
+    if peer_cumulative_difficulty < _highest_cumulative_difficulty {
+        //TODO: Skip peer; it's probably bad. Consider blacklisting if main node does
+    }
+    if _highest_cumulative_difficulty < peer_cumulative_difficulty {
+        _highest_cumulative_difficulty = peer_cumulative_difficulty;
+    }
+    downloads.push_back(download_blocks_task(
+        database.get_random_peer().await.unwrap(),
+        1,
+        10,
+    ));
 
     Ok(())
 }
