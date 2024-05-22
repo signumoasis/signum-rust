@@ -1,10 +1,10 @@
 use once_cell::sync::Lazy;
 use signum_node_rs::{
-    configuration::{get_configuration, DatabaseSettings},
+    configuration::get_configuration,
+    models::datastore::Datastore,
     srs_api::SrsApiApplication,
     telemetry::{get_subscriber, init_subscriber},
 };
-use sqlx::SqlitePool;
 
 // Ensure that `tracing` stack is only initialized once using `once_cell`
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -25,7 +25,7 @@ pub async fn spawn_app() -> TestApp {
     // Randomize config to ensure test isolation
     let configuration = {
         let mut c = get_configuration().expect("failed to read configuration");
-        c.database.filename = "sqlite::memory:".to_string();
+        c.database.filename = "mem://".to_string();
         c.srs_api.listen_port = 0;
 
         // Set up config for testing
@@ -38,12 +38,10 @@ pub async fn spawn_app() -> TestApp {
     };
 
     // Configure and migrate the database
-    let db_pool = configure_database(&configuration.database)
-        .await
-        .expect("unable to get dbpool");
+    let datastore = configuration.database.get_db().await.unwrap();
 
     // Launch the application as a background task
-    let application = SrsApiApplication::build(configuration.clone())
+    let application = SrsApiApplication::build(configuration.clone(), datastore.clone())
         .await
         .expect("failed to build application");
     let application_port = application.port();
@@ -58,30 +56,30 @@ pub async fn spawn_app() -> TestApp {
 
     TestApp {
         address: format!("http://localhost:{}", application_port),
+        datastore,
         port: application_port,
-        db_pool,
         api_client: client,
     }
 }
 
 pub struct TestApp {
     pub address: String,
+    pub datastore: Datastore,
     pub port: u16,
-    pub db_pool: SqlitePool,
     pub api_client: reqwest::Client,
 }
 
 impl TestApp {}
 
-async fn configure_database(configuration: &DatabaseSettings) -> Result<SqlitePool, anyhow::Error> {
-    // Create in-memory database and migrate it
-    let connection_pool = SqlitePool::connect_with(configuration.get_writable_db()?)
-        .await
-        .expect("failed to connect to in-memory database");
-    sqlx::migrate!("./migrations")
-        .run(&connection_pool)
-        .await
-        .expect("failed to migrate the in-memory database");
-
-    Ok(connection_pool)
-}
+// async fn configure_database(configuration: &DatabaseSettings) -> Result<SqlitePool, anyhow::Error> {
+//     // Create in-memory database and migrate it
+//     let connection_pool = SqlitePool::connect_with(configuration.get_writable_db()?)
+//         .await
+//         .expect("failed to connect to in-memory database");
+//     sqlx::migrate!("./migrations")
+//         .run(&connection_pool)
+//         .await
+//         .expect("failed to migrate the in-memory database");
+//
+//     Ok(connection_pool)
+// }
