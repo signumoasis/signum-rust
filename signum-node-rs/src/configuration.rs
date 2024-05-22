@@ -30,6 +30,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     settings
 }
 
+#[allow(dead_code)]
 trait ConfigBuilderExtensions {
     fn add_defaults(self) -> Result<Self, config::ConfigError>
     where
