@@ -1,6 +1,7 @@
 use anyhow::Result;
+use futures::stream::FuturesOrdered;
 use serde_json::json;
-use std::{collections::VecDeque, time::Duration};
+use std::time::Duration;
 use tracing::Instrument;
 use uuid::Uuid;
 
@@ -58,7 +59,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     // * Which block sets have been queried - handled by FIFO task queue
     // * Which ones have errored - handled by FIFO task queue, but must be re-requested
     //
-    let _downloads = VecDeque::<B1Block>::new();
+    let mut downloads = FuturesOrdered::new();
 
     let _highest_cumulative_difficulty = 0u128;
     let peers = database.get_n_random_peers(5).await?;
