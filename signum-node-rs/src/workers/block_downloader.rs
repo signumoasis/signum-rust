@@ -3,12 +3,16 @@ use futures::stream::FuturesOrdered;
 use num_bigint::BigUint;
 use serde_json::json;
 use std::time::Duration;
+use surrealdb::sql::Block;
 use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
     configuration::Settings,
-    models::{datastore::Datastore, p2p::PeerAddress},
+    models::{
+        datastore::Datastore,
+        p2p::{B1Block, PeerAddress},
+    },
     peers::get_peer_cumulative_difficulty,
     statistics_mode,
 };
@@ -39,7 +43,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     // * Initiate FIFO queue
     // * Determine highest block stored in DB
     // * Determine the mode of the highest cumulative difficulty
-    //   of several or maybe all known peers
+    // of several or maybe all known peers
     // * Store highest cumulative difficulty.
     // * Establish a FuturesOrdered
     // * Loop through random peers, triggering download tasks if that peer matches the
@@ -61,7 +65,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     let mut downloads = FuturesOrdered::new();
 
     let mut _highest_cumulative_difficulty = BigUint::ZERO;
-    let peers = database.get_n_random_peers(5).await?;
+    let peers = database.get_n_random_peers(10).await?;
 
     tracing::debug!("Random peers from db: {:#?}", &peers);
 
@@ -85,7 +89,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
         _highest_cumulative_difficulty
     );
 
-    //TODO: Do this in a loop, setting up appropriate sets
+    //TODO: Do this in a loop, setting up appropriate sets of blocks
     let peer = database
         .get_random_peer()
         .await
@@ -126,3 +130,5 @@ async fn download_blocks_task(
     // - Parse or Verification error for bad blocks
     Ok(())
 }
+
+async fn verify_b1_block(block: B1Block) -> anyhow::Result<B1Block> {}
