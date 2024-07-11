@@ -1,54 +1,53 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/rust
 {
-	"name": "Rust",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
-	"features": {
-		"ghcr.io/itsmechlark/features/1password:1": {},
-		"git": "os-provided",
-		"github-cli": "latest",
-		"docker-from-docker": "latest",
-		"ghcr.io/warrenbuckley/codespace-features/sqlite": "latest"
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"a5huynh.vscode-ron",
-				"brunnerh.insert-unicode",
-				"DavidAnson.vscode-markdownlint",
-				"foxundermoon.shell-format",
-				"mhutchie.git-graph",
-				"GitHub.vscode-github-actions",
-				"Gruntfuggly.todo-tree",
-				"heaths.vscode-guid",
-				"mohsen1.prettify-json",
-				"redhat.vscode-yaml",
-				"rust-lang.rust-analyzer",
-				"serayuzgur.crates",
-				"tamasfe.even-better-toml",
-				"usernamehw.errorlens",
-				"vscode-icons-team.vscode-icons"
-			]
-		}
-	},
-	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
-	// "mounts": [
-	// 	{
-	// 		"source": "devcontainer-cargo-cache-${devcontainerId}",
-	// 		"target": "/usr/local/cargo",
-	// 		"type": "volume"
-	// 	}
-	// ]
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "chmod +x .devcontainer/postCreate.sh && sh -c '.devcontainer/postCreate.sh'",
-	"remoteUser": "vscode"
-	// Configure tool-specific properties.
-	// "customizations": {},
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  "name": "Rust",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
+  "features": {
+    "ghcr.io/itsmechlark/features/1password:1": "latest",
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/warrenbuckley/codespace-features/sqlite": "latest",
+    "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": "latest"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "a5huynh.vscode-ron",
+        "brunnerh.insert-unicode",
+        "DavidAnson.vscode-markdownlint",
+        "foxundermoon.shell-format",
+        "mhutchie.git-graph",
+        "GitHub.vscode-github-actions",
+        "Gruntfuggly.todo-tree",
+        "heaths.vscode-guid",
+        "mohsen1.prettify-json",
+        "redhat.vscode-yaml",
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml",
+        "usernamehw.errorlens",
+        "vscode-icons-team.vscode-icons"
+      ]
+    }
+  },
+  // Use 'mounts' to make the cargo cache persistent in a Docker Volume.
+  // "mounts": [
+  //   {
+  //     "source": "devcontainer-cargo-cache-${devcontainerId}",
+  //     "target": "/usr/local/cargo",
+  //     "type": "volume"
+  //   }
+  // ]
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "chmod +x .devcontainer/postCreate.sh && sh -c '.devcontainer/postCreate.sh'",
+  "remoteUser": "vscode"
+  // Configure tool-specific properties.
+  // "customizations": {},
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "root"
 }
