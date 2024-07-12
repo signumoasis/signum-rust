@@ -2,7 +2,7 @@
 name = "signum-node-rs"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.7.0"
+rust-version = "1.70.0"
 
 [lib]
 path = "src/lib.rs"
