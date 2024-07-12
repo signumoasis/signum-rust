@@ -51,6 +51,7 @@
               shellHook = ''
                 export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
               '';
+              LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
               buildInputs = runtimeDeps;
               nativeBuildInputs = buildDeps ++ devDeps ++ [ rustc ];
             };
