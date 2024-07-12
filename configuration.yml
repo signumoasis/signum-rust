@@ -1,5 +1,5 @@
 database:
-  filename: "ws://localhost:8000"
+  filename: "ws://localhost:8001"
 node:
   cash_back_id: "15595382771538009899"
   network: "Signum"
