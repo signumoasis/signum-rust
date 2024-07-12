@@ -11,7 +11,14 @@
         let
           runtimeDeps = with pkgs; [ alsa-lib speechd ];
           buildDeps = with pkgs; [ pkg-config rustPlatform.bindgenHook ];
-          devDeps = with pkgs; [ gdb cargo-nextest clang lld lldb ];
+          devDeps = with pkgs; [
+            cargo-msrv
+            cargo-nextest
+            clang
+            gdb
+            lld
+            lldb
+          ];
 
           cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
           msrv = cargoToml.package.rust-version;
