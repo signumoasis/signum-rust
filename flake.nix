@@ -9,8 +9,15 @@
       systems = [ "x86_64-linux" ];
       perSystem = { config, self', pkgs, lib, system, ... }:
         let
-          runtimeDeps = with pkgs; [ alsa-lib speechd ];
-          buildDeps = with pkgs; [ pkg-config rustPlatform.bindgenHook ];
+          runtimeDeps = with pkgs; [
+          ];
+          buildDeps = with pkgs; [
+            clang
+            lld
+            lldb
+            pkg-config
+            rustPlatform.bindgenHook
+          ];
           devDeps = with pkgs; [
             cargo-msrv
             cargo-nextest
