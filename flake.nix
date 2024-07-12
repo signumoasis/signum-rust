@@ -61,11 +61,14 @@
             overlays = [ (import inputs.rust-overlay) ];
           };
 
-          packages.default = self'.packages.example;
+          packages.default = self'.packages.base;
           devShells.default = self'.devShells.stable;
 
           packages.example = (rustPackage "foobar");
           packages.example-base = (rustPackage "");
+          packages.base = (rustPackage "");
+          packages.bunyan = (rustPackage "bunyan");
+          packages.tokio-console = (rustPackage "tokio-console");
 
           devShells.nightly = (mkDevShell (pkgs.rust-bin.selectLatestNightlyWith
             (toolchain: toolchain.default.override {
