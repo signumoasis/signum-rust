@@ -1,6 +1,8 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
+    };
     flake-parts.url = "github:hercules-ci/flake-parts";
     rust-overlay.url = "github:oxalica/rust-overlay";
   };
@@ -25,6 +27,7 @@
             gdb
             lld
             lldb
+            surrealdb
           ];
 
           cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
@@ -57,10 +60,14 @@
             };
         in
         {
-          _module.args.pkgs = import inputs.nixpkgs {
-            inherit system;
-            overlays = [ (import inputs.rust-overlay) ];
-          };
+          _module.args.pkgs = import inputs.nixpkgs
+            {
+              inherit system;
+              overlays = [ (import inputs.rust-overlay) ];
+              config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+                "surrealdb"
+              ];
+            };
 
           packages.default = self'.packages.base;
           devShells.default = self'.devShells.stable;
