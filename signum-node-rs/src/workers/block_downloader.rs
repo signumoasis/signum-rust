@@ -131,4 +131,6 @@ async fn download_blocks_task(
     Ok(())
 }
 
-async fn verify_b1_block(block: B1Block) -> anyhow::Result<B1Block> {}
+async fn verify_b1_block(block: B1Block) -> anyhow::Result<B1Block> {
+    todo!()
+}
