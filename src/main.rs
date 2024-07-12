@@ -22,14 +22,14 @@ async fn main() -> Result<()> {
     start().await
 }
 
-pub static CONFIGURATION: Settings = configuration::get_configuration();
+//pub static CONFIGURATION: Settings = configuration::get_configuration();
 
 #[tracing::instrument]
 async fn start() -> Result<()> {
-    //let configuration =
-    //    get_configuration().expect("Couldn't get the configuration. Unable to continue");
+    let configuration =
+        get_configuration().expect("Couldn't get the configuration. Unable to continue");
 
-    let configuration = CONFIGURATION;
+    //let configuration = CONFIGURATION;
 
     let database = configuration.database.get_db().await?;
 

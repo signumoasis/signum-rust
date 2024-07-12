@@ -29,16 +29,16 @@ impl<T> Flux<T> {
     }
 }
 
-pub static MAX_PAYLOAD_LENGTH: Flux<u32> = Flux::<u32>::new(
-    255 * 176,
-    vec![
-        FluxChangeValue::new(historical_moments::PRE_POC2.get().unwrap(), 255 * 176 * 4),
-        FluxChangeValue::new(
-            historical_moments::SMART_FEES_ENABLE.get().unwrap(),
-            255 * (176 + 8) * 4 * 2,
-        ),
-    ],
-);
+//pub static MAX_PAYLOAD_LENGTH: Flux<u32> = Flux::<u32>::new(
+//    255 * 176,
+//    vec![
+//        FluxChangeValue::new(historical_moments::PRE_POC2.get().unwrap(), 255 * 176 * 4),
+//        FluxChangeValue::new(
+//            historical_moments::SMART_FEES_ENABLE.get().unwrap(),
+//            255 * (176 + 8) * 4 * 2,
+//        ),
+//    ],
+//);
 //pub static MAX_PAYLOAD_LENGTH: Flux<u32> = Flux::<u32>::new(
 //    255 * 176,
 //    vec![

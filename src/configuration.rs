@@ -42,7 +42,7 @@ trait ConfigBuilderExtensions {
 pub struct Settings {
     pub srs_api: SrsApiSettings,
     pub database: DatabaseSettings,
-    pub historical_moments: HistoricalMoments,
+    //pub historical_moments: HistoricalMoments,
     pub node: NodeSettings,
     pub p2p: PeerToPeerSettings,
 }
