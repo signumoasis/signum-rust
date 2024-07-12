@@ -2,6 +2,7 @@ use actix_web::HttpResponse;
 use itertools::Itertools;
 
 pub mod configuration;
+pub mod flux_capacitor;
 pub mod models;
 pub mod peers;
 pub mod srs_api;

@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use anyhow::Result;
 
 use signum_node_rs::{
-    configuration::get_configuration,
+    configuration::{self, get_configuration, Settings},
     srs_api::SrsApiApplication,
     telemetry::{get_subscriber, init_subscriber},
     workers::{
@@ -22,10 +22,14 @@ async fn main() -> Result<()> {
     start().await
 }
 
+pub static CONFIGURATION: Settings = configuration::get_configuration();
+
 #[tracing::instrument]
 async fn start() -> Result<()> {
-    let configuration =
-        get_configuration().expect("Couldn't get the configuration. Unable to continue");
+    //let configuration =
+    //    get_configuration().expect("Couldn't get the configuration. Unable to continue");
+
+    let configuration = CONFIGURATION;
 
     let database = configuration.database.get_db().await?;
 
