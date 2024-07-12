@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
+sudo apt-get update
+sudo apt-get install -y clang lldb lld
+
+rustup component add rust-analyzer
+
 # cat > ~/.pgpass <<EOF
 # ${PGHOST}:${PGPORT}:${PGDATABASE}:${PGUSER}:${POSTGRES_PASSWORD}
 # EOF
 # chmod 600 ~/.pgpass
 
-sudo chown vscode:vscode /usr/local/cargo/registry
+#sudo chown vscode:vscode /usr/local/cargo/registry
 # cargo --color never install cargo-binstall
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
