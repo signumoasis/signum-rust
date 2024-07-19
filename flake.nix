@@ -23,10 +23,13 @@
           devDeps = with pkgs; [
             cargo-msrv
             cargo-nextest
+            cargo-watch
             clang
+            just
             gdb
             lld
             lldb
+            nushell
             surrealdb
             panamax
           ];
