@@ -28,6 +28,7 @@
             lld
             lldb
             surrealdb
+            panamax
           ];
 
           cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
