@@ -9,6 +9,9 @@ pub mod srs_api;
 pub mod telemetry;
 pub mod workers;
 
+mod historical_moments;
+pub use historical_moments::*;
+
 pub fn error_chain_fmt(
     e: &impl std::error::Error,
     f: &mut std::fmt::Formatter<'_>,
