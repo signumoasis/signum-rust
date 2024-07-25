@@ -40,3 +40,7 @@ reset:
 # launch the app with support for tokio console (full recompile)
 tokioconsole level=LOG_LEVEL:
     RUSTFLAGS="--cfg tokio_unstable" RUST_LOG="INFO,signum_node_rs={{level}}" cargo run --features=tokio-console
+
+# run the surrealdb server for development
+surrealdb:
+    surreal start --allow-all --bind 127.0.0.1:8001 file://signum.surrealdb
