@@ -3,7 +3,6 @@ use futures::stream::FuturesOrdered;
 use num_bigint::BigUint;
 use serde_json::json;
 use std::time::Duration;
-use surrealdb::sql::Block;
 use tracing::Instrument;
 use uuid::Uuid;
 
@@ -131,6 +130,6 @@ async fn download_blocks_task(
     Ok(())
 }
 
-async fn verify_b1_block(block: B1Block) -> anyhow::Result<B1Block> {
+async fn _verify_b1_block(_block: B1Block) -> anyhow::Result<B1Block> {
     todo!()
 }

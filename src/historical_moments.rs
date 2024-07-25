@@ -29,6 +29,12 @@ impl HistoricalMoments<Building> {
     }
 }
 
+impl Default for HistoricalMoments<Building> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HistoricalMoments<Active> {
     /// The height at which the genesis block was created. Always 0.
     pub fn genesis(&self) -> u32 {

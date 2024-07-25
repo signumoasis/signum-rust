@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use anyhow::Result;
 
 use signum_node_rs::{
-    configuration::{self, get_configuration, Settings},
+    configuration::get_configuration,
     srs_api::SrsApiApplication,
     telemetry::{get_subscriber, init_subscriber},
     workers::{

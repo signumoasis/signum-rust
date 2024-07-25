@@ -37,7 +37,7 @@ async fn srs_api_handler_returns_valid_data_for_get_info_request() -> Result<(),
         .context("couldn't deserialize json")?;
 
     let template = GetInfoRequestModel {
-        announced_address: Some(format!("http://localhost").to_string()),
+        announced_address: Some("http://localhost".to_string().to_string()),
         application: Some("SignumRust".to_string()),
         version: Some("0.1.0".to_string()),
         platform: Some("Test".to_string()),

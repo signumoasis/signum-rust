@@ -56,17 +56,17 @@ pub async fn spawn_app() -> TestApp {
 
     TestApp {
         address: format!("http://localhost:{}", application_port),
-        datastore,
-        port: application_port,
-        api_client: client,
+        _datastore: datastore,
+        _port: application_port,
+        _api_client: client,
     }
 }
 
 pub struct TestApp {
     pub address: String,
-    pub datastore: Datastore,
-    pub port: u16,
-    pub api_client: reqwest::Client,
+    pub _datastore: Datastore,
+    pub _port: u16,
+    pub _api_client: reqwest::Client,
 }
 
 impl TestApp {}

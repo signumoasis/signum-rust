@@ -3,28 +3,31 @@ pub trait FluxValue<T> {
 }
 
 pub struct FluxChangeValue<T> {
-    pub(crate) height: u32,
-    pub(crate) new_value: T,
+    pub(crate) _height: u32,
+    pub(crate) _new_value: T,
 }
 impl<T> FluxChangeValue<T> {
-    pub fn new(height: u32, new_value: T) -> Self {
-        Self { height, new_value }
+    pub fn new(_height: u32, _new_value: T) -> Self {
+        Self {
+            _height,
+            _new_value,
+        }
     }
 }
 
 pub struct Flux<T> {
-    genesis_value: T,
+    _genesis_value: T,
     /// A vec of tuple of u32 (height) and T (the value)
-    changes: Vec<FluxChangeValue<T>>,
+    _changes: Vec<FluxChangeValue<T>>,
 }
 impl<T> Flux<T> {
     pub const fn new(genesis_value: T, changes: Vec<FluxChangeValue<T>>) -> Self {
         Self {
-            genesis_value,
-            changes,
+            _genesis_value: genesis_value,
+            _changes: changes,
         }
     }
-    pub fn get_flux_value(height: u32) -> T {
+    pub fn get_flux_value(_height: u32) -> T {
         todo!()
     }
 }

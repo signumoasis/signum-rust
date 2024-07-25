@@ -65,7 +65,7 @@ pub async fn peer_finder(mut database: Datastore, settings: Settings) -> Result<
 
         match response {
             Ok(mut r) => {
-                if let Ok(_) = r.take::<Vec<String>>("announced_address") {
+                if r.take::<Vec<String>>("announced_address").is_ok() {
                     tracing::debug!("Saved new peer {}", &peer);
                     tracing::debug!("Attempting to update peer info database for '{}'", &peer);
                     tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
