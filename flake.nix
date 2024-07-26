@@ -76,8 +76,6 @@
           packages.default = self'.packages.base;
           devShells.default = self'.devShells.stable;
 
-          packages.example = (rustPackage "foobar");
-          packages.example-base = (rustPackage "");
           packages.base = (rustPackage "");
           packages.bunyan = (rustPackage "bunyan");
           packages.tokio-console = (rustPackage "tokio-console");
