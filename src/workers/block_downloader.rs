@@ -1,9 +1,8 @@
 use anyhow::{Context, Result};
-use futures::stream::FuturesOrdered;
-use futures::stream::Stream;
 use num_bigint::BigUint;
 use serde_json::json;
-use std::{cmp::Ordering, time::Duration};
+use std::{cmp::Ordering, collections::VecDeque, time::Duration};
+use tokio::task::JoinHandle;
 use tracing::{instrument, Instrument};
 use uuid::Uuid;
 
@@ -62,7 +61,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     // * Which block sets have been queried - handled by FIFO task queue
     // * Which ones have errored - handled by FIFO task queue, but must be re-requested
     //
-    let mut downloads = FuturesOrdered::new();
+    let mut downloads = VecDeque::<JoinHandle<_>>::new();
     let max_download_tasks = 8;
 
     //let mut highest_cumulative_difficulty = BigUint::ZERO;
@@ -73,6 +72,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     let mut cumulative_difficulties: Vec<BigUint> = Vec::new();
 
     for peer in peers {
+        tracing::trace!("Getting cumulative difficulty from {}.", &peer);
         // Get cumulative difficulties to find the most common one
         let cd = get_peer_cumulative_difficulty(peer).await?;
         cumulative_difficulties.push(cd);
@@ -91,7 +91,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     );
 
     //TODO: Do this in a loop, setting up appropriate sets of blocks
-    let mut queued_download_tasks = 0;
+    let mut queued_download_tasks = 1;
     loop {
         let peer = database
             .get_random_peer()
@@ -102,7 +102,11 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
             .context("unable to get peer cumulative difficulty")?;
         if peer_cumulative_difficulty == highest_cumulative_difficulty {
             tracing::trace!("Queueing {} for block download.", &peer);
-            downloads.push_back(download_blocks_task(peer, 1, 10));
+            downloads.push_back(tokio::spawn(download_blocks_task(
+                peer,
+                10 * queued_download_tasks,
+                (10 * queued_download_tasks) + 10,
+            )));
             queued_download_tasks += 1;
         } else {
             let comparison = match peer_cumulative_difficulty.cmp(&highest_cumulative_difficulty) {
@@ -112,15 +116,14 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
             };
 
             tracing::warn!(
-                "Not downloading from {} because cumulative difficulty ({}) is {}
-                the target ({}).",
+                "Not downloading from {} because cumulative difficulty ({}) is {} the target ({}).",
                 &peer,
                 &peer_cumulative_difficulty,
                 comparison,
                 &highest_cumulative_difficulty,
             );
         }
-        if queued_download_tasks >= max_download_tasks {
+        if queued_download_tasks > max_download_tasks {
             break;
         }
         //TODO: Skip peer; it's probably bad. Consider blacklisting if main node does
@@ -132,16 +135,46 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     }
 
     // Loop over jobs, polling if they're done or not
-    tracing::trace!("Need to loop download jobs now and wait for them to finish");
-    loop {
-        let x = downloads.poll_next();
+    tracing::trace!("{} DOWNLOAD TASKS QUEUED", downloads.len());
+    tracing::trace!("{:#?}", &downloads);
+    while let Some(download_task) = downloads.pop_front() {
+        //tracing::trace!("{:#?}", &download_task);
+        if download_task.is_finished() {
+            let (peer, height, numblocks) = download_task.await??;
+            tracing::trace!(
+                "QUEUE BLOCK PROCESSING: {} - height: {} - number_of_blocks: {}",
+                peer,
+                height,
+                numblocks
+            );
+            tracing::trace!("Blocks remaining in queue: {}", downloads.len());
+        } else {
+            downloads.push_front(download_task);
+        }
+        let _ = tokio::time::sleep(Duration::from_millis(2)).await;
     }
+    //while let Some(download_task) = downloads.get(0) {
+    //    if download_task.is_finished() {
+    //        let (peer, height, numblocks) = downloads.pop_front();
+    //        tracing::trace!(
+    //            "QUEUE BLOCK PROCESSING: {} - height: {} - number_of_blocks: {}",
+    //            peer,
+    //            height,
+    //            numblocks
+    //        );
+    //        tracing::trace!("Blocks remaining in queue: {}", downloads.len());
+    //    }
+    //}
 
     Ok(())
 }
 
 #[instrument(name = "Download Blocks Task")]
-async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: u64) -> Result<()> {
+async fn download_blocks_task(
+    peer: PeerAddress,
+    height: u64,
+    number_of_blocks: u64,
+) -> Result<(PeerAddress, u64, u64)> {
     let _thebody = json!({
         "protocol": "B1",
         "requestType": "getBlocksFromHeight",
@@ -156,11 +189,13 @@ async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: 
         &peer
     );
 
+    let _ = tokio::time::sleep(Duration::from_secs(1)).await;
+
     //TODO: Process the blocks just downloaded and return the correct Result
     // - OK if all in this subchain are good
     // - Connection error for any connectivity issues
     // - Parse or Verification error for bad blocks
-    Ok(())
+    Ok((peer, height, number_of_blocks))
 }
 
 async fn _verify_b1_block(_block: B1Block) -> anyhow::Result<B1Block> {
