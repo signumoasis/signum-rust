@@ -4,10 +4,8 @@ use anyhow::Context;
 use reqwest::Url;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
-#[derive(
-    Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, SerializeDisplay, sqlx::Type,
-)]
-#[sqlx(transparent)]
+#[derive(Clone, Debug, Default, DeserializeFromStr, Eq, Hash, PartialEq, SerializeDisplay)]
+//#[sqlx(transparent)]
 pub struct PeerAddress(pub(crate) String);
 
 impl PeerAddress {
