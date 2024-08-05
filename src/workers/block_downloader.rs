@@ -1,9 +1,10 @@
 use anyhow::{Context, Result};
 use futures::stream::FuturesOrdered;
+use futures::stream::Stream;
 use num_bigint::BigUint;
 use serde_json::json;
-use std::time::Duration;
-use tracing::Instrument;
+use std::{cmp::Ordering, time::Duration};
+use tracing::{instrument, Instrument};
 use uuid::Uuid;
 
 use crate::{
@@ -62,8 +63,9 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     // * Which ones have errored - handled by FIFO task queue, but must be re-requested
     //
     let mut downloads = FuturesOrdered::new();
+    let max_download_tasks = 8;
 
-    let mut _highest_cumulative_difficulty = BigUint::ZERO;
+    //let mut highest_cumulative_difficulty = BigUint::ZERO;
     let peers = database.get_n_random_peers(10).await?;
 
     tracing::debug!("Random peers from db: {:#?}", &peers);
@@ -77,51 +79,82 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     }
 
     tracing::debug!(
-        "Hi 5 cumulative difficulties: {:#?}",
+        "Highest cumulative difficulties: {:#?}",
         cumulative_difficulties
     );
 
-    _highest_cumulative_difficulty =
+    let highest_cumulative_difficulty =
         statistics_mode(cumulative_difficulties).unwrap_or(BigUint::ZERO);
     tracing::debug!(
         "Highest cumulative difficulty: {}",
-        _highest_cumulative_difficulty
+        highest_cumulative_difficulty
     );
 
     //TODO: Do this in a loop, setting up appropriate sets of blocks
-    let peer = database
-        .get_random_peer()
-        .await
-        .context("couldn't get random peer from database")?;
-    let peer_cumulative_difficulty = get_peer_cumulative_difficulty(peer)
-        .await
-        .context("unable to get peer cumulative difficulty")?;
-    if peer_cumulative_difficulty < _highest_cumulative_difficulty {
+    let mut queued_download_tasks = 0;
+    loop {
+        let peer = database
+            .get_random_peer()
+            .await
+            .context("couldn't get random peer from database")?;
+        let peer_cumulative_difficulty = get_peer_cumulative_difficulty(peer.clone())
+            .await
+            .context("unable to get peer cumulative difficulty")?;
+        if peer_cumulative_difficulty == highest_cumulative_difficulty {
+            tracing::trace!("Queueing {} for block download.", &peer);
+            downloads.push_back(download_blocks_task(peer, 1, 10));
+            queued_download_tasks += 1;
+        } else {
+            let comparison = match peer_cumulative_difficulty.cmp(&highest_cumulative_difficulty) {
+                Ordering::Less => "less than",
+                Ordering::Greater => "greater than",
+                Ordering::Equal => "the same as", // This one should actually never happen
+            };
+
+            tracing::warn!(
+                "Not downloading from {} because cumulative difficulty ({}) is {}
+                the target ({}).",
+                &peer,
+                &peer_cumulative_difficulty,
+                comparison,
+                &highest_cumulative_difficulty,
+            );
+        }
+        if queued_download_tasks >= max_download_tasks {
+            break;
+        }
         //TODO: Skip peer; it's probably bad. Consider blacklisting if main node does
+
+        // DISABLED - Unsure we need to do this
+        //if highest_cumulative_difficulty < peer_cumulative_difficulty {
+        //    highest_cumulative_difficulty = peer_cumulative_difficulty;
+        //}
     }
-    if _highest_cumulative_difficulty < peer_cumulative_difficulty {
-        _highest_cumulative_difficulty = peer_cumulative_difficulty;
+
+    // Loop over jobs, polling if they're done or not
+    tracing::trace!("Need to loop download jobs now and wait for them to finish");
+    loop {
+        let x = downloads.poll_next();
     }
-    downloads.push_back(download_blocks_task(
-        database.get_random_peer().await.unwrap(),
-        1,
-        10,
-    ));
 
     Ok(())
 }
 
-async fn download_blocks_task(
-    _peer: PeerAddress,
-    height: u64,
-    number_of_blocks: u64,
-) -> Result<()> {
+#[instrument(name = "Download Blocks Task")]
+async fn download_blocks_task(peer: PeerAddress, height: u64, number_of_blocks: u64) -> Result<()> {
     let _thebody = json!({
         "protocol": "B1",
         "requestType": "getBlocksFromHeight",
         "height": height,
         "numBlocks": number_of_blocks,
     });
+
+    tracing::trace!(
+        "Downloading blocks {} through {} from {}.",
+        &height,
+        &number_of_blocks,
+        &peer
+    );
 
     //TODO: Process the blocks just downloaded and return the correct Result
     // - OK if all in this subchain are good
