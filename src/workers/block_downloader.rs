@@ -1,3 +1,4 @@
+use actix_web::web::get;
 use anyhow::{Context, Result};
 use num_bigint::BigUint;
 use serde_json::json;
@@ -81,8 +82,18 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     for peer in peers {
         tracing::trace!("Getting cumulative difficulty from {}.", &peer);
         // Get cumulative difficulties to find the most common one
-        let cd = get_peer_cumulative_difficulty(peer.clone()).await?;
-        cumulative_difficulties.push((peer, cd));
+        match get_peer_cumulative_difficulty(peer.clone()).await {
+            Ok(result) => {
+                cumulative_difficulties.push((peer, result));
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Unable to get cumulative difficulty from {}. Removing from consideration.\n\tCaused by: {}",
+                    peer,
+                    e
+                );
+            }
+        }
     }
 
     tracing::debug!(
