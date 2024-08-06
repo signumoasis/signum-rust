@@ -26,5 +26,5 @@ pub struct B1Block {
     nonce: u64,
     base_target: u64,
     #[serde(rename = "blockATs")]
-    block_ats: String,
+    block_ats: Option<String>,
 }
