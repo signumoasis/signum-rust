@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use num_bigint::BigUint;
 use serde_json::json;
 use std::{cmp::Ordering, collections::VecDeque, time::Duration};
-use tokio::task::JoinHandle;
+use tokio::task::{JoinHandle, JoinSet};
 use tracing::{instrument, Instrument};
 use uuid::Uuid;
 
@@ -79,27 +79,36 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
 
     let mut cumulative_difficulties: Vec<(PeerAddress, BigUint)> = Vec::new();
 
+    let mut joinset = JoinSet::new();
     for peer in peers {
-        tracing::trace!("Getting cumulative difficulty from {}.", &peer);
+        tracing::trace!("Queueing get cumulative difficulty from {}.", &peer);
+        joinset.spawn(async move {
+            let cd = get_peer_cumulative_difficulty(peer.clone()).await?;
+            Ok::<(PeerAddress, BigUint), anyhow::Error>((peer, cd))
+        });
+    }
+    while let Some(joinhandle) = joinset.join_next().await {
+        //tracing::trace!("Getting cumulative difficulty from {}.", &peer);
         // Get cumulative difficulties to find the most common one
-        match get_peer_cumulative_difficulty(peer.clone()).await {
-            Ok(result) => {
-                cumulative_difficulties.push((peer, result));
-            }
+        match joinhandle {
+            Ok(result) => match result {
+                Ok(r) => {
+                    cumulative_difficulties.push(r);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "Unable to get cumulative difficulty from one of the peers.\n\tCaused by: {}",
+                        e
+                    );
+                }
+            },
             Err(e) => {
-                tracing::warn!(
-                    "Unable to get cumulative difficulty from {}. Removing from consideration.\n\tCaused by: {}",
-                    peer,
-                    e
-                );
+                tracing::error!("Error caused by:\n\t{}", e);
             }
         }
     }
 
-    tracing::debug!(
-        "Highest cumulative difficulties: {:#?}",
-        cumulative_difficulties
-    );
+    tracing::debug!("Cumulative difficulties: {:#?}", cumulative_difficulties);
 
     let highest_cumulative_difficulty = statistics_mode(
         cumulative_difficulties
@@ -143,7 +152,6 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     tracing::trace!("{} DOWNLOAD TASKS QUEUED", downloads.len());
     tracing::trace!("{:#?}", &downloads);
     while let Some(download_task) = downloads.pop_front() {
-        //tracing::trace!("{:#?}", &download_task);
         match download_task.await? {
             Ok(result) => {
                 tracing::trace!(
