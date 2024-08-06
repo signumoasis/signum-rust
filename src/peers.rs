@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
@@ -15,13 +15,15 @@ use crate::models::{
 pub async fn post_peer_request(
     peer: PeerAddress,
     request_body: &Value,
+    timeout: Option<Duration>,
 ) -> Result<Response, reqwest::Error> {
-    reqwest::Client::new()
-        .post(peer.to_url())
-        .header("User-Agent", "BRS/3.8.0")
-        .json(&request_body)
-        .send()
-        .await
+    let mut client = reqwest::Client::new().post(peer.to_url());
+    if let Some(timeout) = timeout {
+        client = client.timeout(timeout);
+    }
+    client = client.header("User-Agent", "BRS/3.8.2").json(&request_body);
+
+    client.send().await
 }
 
 pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
@@ -30,7 +32,7 @@ pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Er
         "requestType": "getPeers",
     });
 
-    let response = post_peer_request(peer, &thebody).await?;
+    let response = post_peer_request(peer, &thebody, None).await?;
 
     tracing::trace!("Parsing peers...");
     #[derive(Debug, serde::Deserialize)]
@@ -115,7 +117,7 @@ pub async fn get_peer_info(peer: PeerAddress) -> Result<(PeerInfo, String), GetP
         "shareAddress": "false",
     });
 
-    let response = post_peer_request(peer.clone(), &thebody).await;
+    let response = post_peer_request(peer.clone(), &thebody, None).await;
 
     let response = match response {
         Ok(r) => Ok(r),
@@ -200,7 +202,7 @@ pub async fn get_peer_cumulative_difficulty(peer: PeerAddress) -> Result<BigUint
         "requestType": "getCumulativeDifficulty",
     });
 
-    let response = post_peer_request(peer.clone(), &thebody).await;
+    let response = post_peer_request(peer.clone(), &thebody, Some(Duration::from_secs(2))).await;
 
     let response = match response {
         Ok(r) => Ok(r),
