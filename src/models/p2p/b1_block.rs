@@ -1,4 +1,4 @@
-use crate::models::p2p::ExchangeableTransaction;
+use crate::models::p2p::B1Transaction;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -22,7 +22,7 @@ pub struct B1Block {
     /// `previous_block_hash` is only valid in v1 blocks.
     previous_block_hash: Option<String>,
     block_signature: String,
-    transactions: Vec<ExchangeableTransaction>,
+    transactions: Vec<B1Transaction>,
     nonce: u64,
     base_target: u64,
     #[serde(rename = "blockATs")]
