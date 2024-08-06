@@ -76,13 +76,13 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
 
     tracing::debug!("Random peers from db: {:#?}", &peers);
 
-    let mut cumulative_difficulties: Vec<BigUint> = Vec::new();
+    let mut cumulative_difficulties: Vec<(PeerAddress, BigUint)> = Vec::new();
 
     for peer in peers {
         tracing::trace!("Getting cumulative difficulty from {}.", &peer);
         // Get cumulative difficulties to find the most common one
-        let cd = get_peer_cumulative_difficulty(peer).await?;
-        cumulative_difficulties.push(cd);
+        let cd = get_peer_cumulative_difficulty(peer.clone()).await?;
+        cumulative_difficulties.push((peer, cd));
     }
 
     tracing::debug!(
@@ -90,8 +90,21 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
         cumulative_difficulties
     );
 
-    let highest_cumulative_difficulty =
-        statistics_mode(cumulative_difficulties).unwrap_or(BigUint::ZERO);
+    let highest_cumulative_difficulty = statistics_mode(
+        cumulative_difficulties
+            .iter()
+            .map(|(_peer, cd)| cd)
+            .collect::<Vec<_>>(),
+    )
+    .unwrap_or(&BigUint::ZERO)
+    .to_owned();
+
+    let download_peers = cumulative_difficulties
+        .into_iter()
+        .filter(|(_peer, cd)| *cd == highest_cumulative_difficulty)
+        .map(|(peer, _cd)| peer)
+        .collect::<Vec<_>>();
+
     tracing::debug!(
         "Highest cumulative difficulty: {}",
         highest_cumulative_difficulty
@@ -99,49 +112,20 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
 
     //TODO: Do this in a loop, setting up appropriate sets of blocks
     let mut queued_download_tasks = 1;
-    loop {
-        //TODO: get next peer from existing peer-set
-        let peer = database
-            .get_random_peer()
-            .await
-            .context("couldn't get random peer from database")?;
-        let peer_cumulative_difficulty = get_peer_cumulative_difficulty(peer.clone())
-            .await
-            .context("unable to get peer cumulative difficulty")?;
-        if peer_cumulative_difficulty == highest_cumulative_difficulty {
-            tracing::trace!("Queueing {} for block download.", &peer);
-            let job = DownloadJob {
-                peer,
-                start_height: 10 * queued_download_tasks,
-                number_of_blocks: (10 * queued_download_tasks) + 10,
-                retries: 0,
-            };
-            downloads.push_back(tokio::spawn(download_blocks_task(job)));
-            queued_download_tasks += 1;
-        } else {
-            let comparison = match peer_cumulative_difficulty.cmp(&highest_cumulative_difficulty) {
-                Ordering::Less => "less than",
-                Ordering::Greater => "greater than",
-                Ordering::Equal => "the same as", // This one should actually never happen
-            };
-
-            tracing::warn!(
-                "Not downloading from {} because cumulative difficulty ({}) is {} the target ({}).",
-                &peer,
-                &peer_cumulative_difficulty,
-                comparison,
-                &highest_cumulative_difficulty,
-            );
-        }
+    for peer in download_peers {
+        tracing::trace!("Queueing {} for block download.", &peer);
+        let job = DownloadJob {
+            peer,
+            start_height: 10 * queued_download_tasks,
+            number_of_blocks: (10 * queued_download_tasks) + 10,
+            retries: 0,
+        };
+        downloads.push_back(tokio::spawn(download_blocks_task(job)));
+        queued_download_tasks += 1;
         if queued_download_tasks > max_download_tasks {
             break;
         }
         //TODO: Skip peer; it's probably bad. Consider blacklisting if main node does
-
-        // DISABLED - Unsure we need to do this
-        //if highest_cumulative_difficulty < peer_cumulative_difficulty {
-        //    highest_cumulative_difficulty = peer_cumulative_difficulty;
-        //}
     }
 
     // Loop over jobs, in order, stitching if they're correct
