@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::{
     configuration::Settings,
     models::datastore::Datastore,
-    peers::{get_peers, update_db_peer_info},
+    peers::{update_db_peer_info, B1Peer, BasicPeerClient},
 };
 
 pub async fn run_peer_finder_forever(database: Datastore, settings: Settings) -> Result<()> {
@@ -52,9 +52,13 @@ pub async fn peer_finder(mut database: Datastore, settings: Settings) -> Result<
         peer.to_owned()
     };
 
-    tracing::info!("Seeking new peers from {}", peer_address);
+    tracing::info!("Seeking new peers from {}", &peer_address);
+
+    let peer = B1Peer::new(peer_address);
+
     // Next, send a request to that peer asking for its peers list.
-    let peers = get_peers(peer_address)
+    let peers = peer
+        .get_peers()
         .await
         .context("unable to get peers from peer")?;
 

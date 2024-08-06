@@ -12,6 +12,42 @@ use crate::models::{
     p2p::{PeerAddress, PeerInfo},
 };
 
+#[allow(async_fn_in_trait)]
+pub trait BasicPeerClient {
+    async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error>;
+}
+
+pub struct B1Peer {
+    peer: PeerAddress,
+}
+
+impl B1Peer {
+    pub fn new(peer: PeerAddress) -> Self {
+        Self { peer }
+    }
+}
+
+impl BasicPeerClient for B1Peer {
+    async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error> {
+        let thebody = json!({
+            "protocol": "B1",
+            "requestType": "getPeers",
+        });
+
+        let response = post_peer_request(&self.peer, &thebody, None).await?;
+
+        tracing::trace!("Parsing peers...");
+        #[derive(Debug, serde::Deserialize)]
+        struct PeerContainer {
+            #[serde(rename = "peers")]
+            peers: Vec<PeerAddress>,
+        }
+        let result = response.json::<PeerContainer>().await?;
+        tracing::trace!("Peers successfully parsed: {:#?}", &result);
+        Ok(result.peers)
+    }
+}
+
 pub async fn post_peer_request(
     peer: &PeerAddress,
     request_body: &Value,
@@ -26,26 +62,7 @@ pub async fn post_peer_request(
     client.send().await
 }
 
-pub async fn get_peers(peer: PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
-    let thebody = json!({
-        "protocol": "B1",
-        "requestType": "getPeers",
-    });
-
-    let response = post_peer_request(&peer, &thebody, None).await?;
-
-    tracing::trace!("Parsing peers...");
-    #[derive(Debug, serde::Deserialize)]
-    struct PeerContainer {
-        #[serde(rename = "peers")]
-        peers: Vec<PeerAddress>,
-    }
-    let result = response.json::<PeerContainer>().await?;
-    tracing::trace!("Peers successfully parsed: {:#?}", &result);
-    Ok(result.peers)
-}
-
-/// Requests peer information from the the supplied PeerAddress. Updates the database
+/// Requests peer information from the supplied PeerAddress. Updates the database
 /// with the acquired information. Returns a [`anyhow::Result<()>`].
 #[tracing::instrument(name = "Update Info Task", skip_all)]
 pub async fn update_db_peer_info(database: Datastore, peer: PeerAddress) -> Result<()> {
