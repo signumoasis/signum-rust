@@ -9,7 +9,6 @@ pub struct B1Block {
     version: u8,
 
     /// Some number since Signum's start epoch
-    //#[serde_as(as = "DisplayFromStr")]
     timestamp: u64,
 
     #[serde_as(as = "DisplayFromStr")]
