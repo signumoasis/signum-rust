@@ -1,6 +1,7 @@
 use actix_web::web::get;
 use anyhow::{Context, Result};
 use num_bigint::BigUint;
+use serde::Deserialize;
 use serde_json::json;
 use std::{cmp::Ordering, collections::VecDeque, time::Duration};
 use tokio::task::{JoinHandle, JoinSet};
@@ -14,7 +15,7 @@ use crate::{
         p2p::{B1Block, PeerAddress},
         Block,
     },
-    peers::get_peer_cumulative_difficulty,
+    peers::{get_peer_cumulative_difficulty, post_peer_request},
     statistics_mode,
 };
 
@@ -137,7 +138,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
         let job = DownloadJob {
             peer,
             start_height: 10 * queued_download_tasks,
-            number_of_blocks: (10 * queued_download_tasks) + 10,
+            number_of_blocks: 10,
             retries: 0,
         };
         downloads.push_back(tokio::spawn(download_blocks_task(job)));
@@ -188,9 +189,10 @@ struct DownloadResult {
     number_of_blocks: u64,
 }
 
+//TODO: Rework the output of this to use a custom error type that includes the reason and DownloadJob
 #[instrument(name = "Download Blocks Task")]
 async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, DownloadJob> {
-    let _thebody = json!({
+    let thebody = json!({
         "protocol": "B1",
         "requestType": "getBlocksFromHeight",
         "height": job.start_height,
@@ -204,7 +206,28 @@ async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, Downlo
         &job.peer
     );
 
-    let _ = tokio::time::sleep(Duration::from_secs(1)).await;
+    let result = match post_peer_request(&job.peer, &thebody, None).await {
+        Ok(result) => result,
+        Err(e) => {
+            tracing::error!(
+                "Unable to get blocks from {}.\n\tCaused by: {}",
+                &job.peer,
+                e
+            );
+            return Err(job);
+        }
+    };
+
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct NextBlocks {
+        next_blocks: Vec<B1Block>,
+    }
+    tracing::trace!(
+        "Blocks Downloaded for {}:\n{:#?}",
+        &job.peer,
+        result.json::<NextBlocks>().await
+    );
 
     let result = DownloadResult {
         peer: job.peer,
