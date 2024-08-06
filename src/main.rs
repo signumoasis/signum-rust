@@ -49,7 +49,7 @@ async fn start() -> Result<()> {
     // Create the peer info trader task
     let peer_info_trader_task = tokio::spawn(run_peer_info_trader_forever(database));
 
-    // Start all the tasks
+    // Select on all the tasks to report closure status
     tokio::select! {
         o = block_downloader_task=> report_exit("Block Downloader", o),
         o = p2p_api_task => report_exit("P2P API Server", o),
