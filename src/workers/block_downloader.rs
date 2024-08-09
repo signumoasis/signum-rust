@@ -1,9 +1,8 @@
-use actix_web::web::get;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use num_bigint::BigUint;
 use serde::Deserialize;
 use serde_json::json;
-use std::{cmp::Ordering, collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, time::Duration};
 use tokio::task::{JoinHandle, JoinSet};
 use tracing::{instrument, Instrument};
 use uuid::Uuid;
@@ -15,6 +14,7 @@ use crate::{
         p2p::{B1Block, PeerAddress},
         Block,
     },
+    peers::{B1Peer, BasicPeerClient, DownloadResult},
     statistics_mode,
 };
 
@@ -39,7 +39,7 @@ pub async fn run_block_downloader_forever(database: Datastore, settings: Setting
 #[derive(Debug)]
 struct DownloadJob {
     start_height: u64,
-    number_of_blocks: u64,
+    number_of_blocks: u32,
     peer: PeerAddress,
     retries: u32,
 }
@@ -80,11 +80,12 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     let mut cumulative_difficulties: Vec<(PeerAddress, BigUint)> = Vec::new();
 
     let mut joinset = JoinSet::new();
-    for peer in peers {
-        tracing::trace!("Queueing get cumulative difficulty from {}.", &peer);
+    for peer_address in peers {
+        tracing::trace!("Queueing get cumulative difficulty from {}.", &peer_address);
+        let peer = B1Peer::new(peer_address.clone());
         joinset.spawn(async move {
-            let cd = get_peer_cumulative_difficulty(peer.clone()).await?;
-            Ok::<(PeerAddress, BigUint), anyhow::Error>((peer, cd))
+            let cd = peer.get_peer_cumulative_difficulty().await?;
+            Ok::<(PeerAddress, BigUint), anyhow::Error>((peer_address, cd))
         });
     }
     while let Some(joinhandle) = joinset.join_next().await {
@@ -182,13 +183,6 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
 //TODO: Rework the output of this to use a custom error type that includes the reason and DownloadJob
 #[instrument(name = "Download Blocks Task")]
 async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, DownloadJob> {
-    let thebody = json!({
-        "protocol": "B1",
-        "requestType": "getBlocksFromHeight",
-        "height": job.start_height,
-        "numBlocks": job.number_of_blocks,
-    });
-
     tracing::trace!(
         "Downloading blocks {} through {} from {}.",
         &job.start_height,
@@ -196,7 +190,12 @@ async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, Downlo
         &job.peer
     );
 
-    let result = match post_peer_request(&job.peer, &thebody, None).await {
+    let peer = B1Peer::new(job.peer.clone());
+
+    let result = match peer
+        .get_blocks_from_height(job.start_height, job.number_of_blocks)
+        .await
+    {
         Ok(result) => result,
         Err(e) => {
             tracing::error!(
@@ -206,24 +205,6 @@ async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, Downlo
             );
             return Err(job);
         }
-    };
-
-    #[derive(Debug, Deserialize)]
-    #[serde(rename_all = "camelCase")]
-    struct NextBlocks {
-        next_blocks: Vec<B1Block>,
-    }
-    tracing::debug!(
-        "Blocks Downloaded for {}:\n{:#?}",
-        &job.peer,
-        result.json::<NextBlocks>().await
-    );
-
-    let result = DownloadResult {
-        peer: job.peer,
-        start_height: job.start_height,
-        number_of_blocks: job.number_of_blocks,
-        blocks: Vec::<Block>::new(),
     };
 
     //TODO: Process the blocks just downloaded and return the correct Result

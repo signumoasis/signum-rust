@@ -4,7 +4,10 @@ use anyhow::Result;
 use tracing::Instrument;
 use uuid::Uuid;
 
-use crate::{models::datastore::Datastore, peers::update_db_peer_info};
+use crate::{
+    models::datastore::Datastore,
+    peers::{update_db_peer_info, B1Peer},
+};
 
 pub async fn run_peer_info_trader_forever(database: Datastore) -> Result<()> {
     loop {
@@ -33,8 +36,9 @@ pub async fn peer_info_trader(database: Datastore) -> Result<()> {
     tracing::info!("Refreshing {} known peers", &peers.len());
 
     // Loop through the list to attempt to update the info for each one
-    for peer in peers {
-        tracing::debug!("Launching update task for {}", &peer);
+    for peer_address in peers {
+        tracing::debug!("Launching update task for {}", &peer_address);
+        let peer = B1Peer::new(peer_address);
         // Spawn update info task
         tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
     }

@@ -63,19 +63,24 @@ pub async fn peer_finder(mut database: Datastore, settings: Settings) -> Result<
         .context("unable to get peers from peer")?;
 
     let mut new_peers_count = 0;
-    for peer in peers {
-        tracing::trace!("Trying to save peer {}", peer);
-        let response = database.create_new_peer(&peer).await;
+    for peer_address in peers {
+        tracing::trace!("Trying to save peer {}", peer_address);
+        let response = database.create_new_peer(&peer_address).await;
+
+        let peer = B1Peer::new(peer_address.clone());
 
         match response {
             Ok(mut r) => {
                 if r.take::<Vec<String>>("announced_address").is_ok() {
-                    tracing::debug!("Saved new peer {}", &peer);
-                    tracing::debug!("Attempting to update peer info database for '{}'", &peer);
+                    tracing::debug!("Saved new peer {}", &peer_address);
+                    tracing::debug!(
+                        "Attempting to update peer info database for '{}'",
+                        &peer_address
+                    );
                     tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
                     new_peers_count += 1;
                 } else {
-                    tracing::debug!("Already have peer {}", peer)
+                    tracing::debug!("Already have peer {}", peer_address)
                 };
             }
             Err(e) => {

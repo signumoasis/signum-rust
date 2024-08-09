@@ -17,10 +17,10 @@ use crate::models::{
 /// A downloaded set of blocks.
 #[derive(Debug)]
 pub struct DownloadResult {
-    blocks: Vec<Block>,
-    peer: PeerAddress,
-    start_height: u64,
-    number_of_blocks: u32,
+    pub blocks: Vec<Block>,
+    pub peer: PeerAddress,
+    pub start_height: u64,
+    pub number_of_blocks: u32,
 }
 
 #[allow(async_fn_in_trait)]
@@ -85,18 +85,16 @@ impl BasicPeerClient for B1Peer {
             &self.address()
         );
 
-        let result = match &self.post_peer_request(&thebody, None).await {
-            Ok(result) => result,
-            Err(e) => {
-                tracing::error!(
-                    "Unable to get blocks from {}.\n\tCaused by: {}",
-                    &self.peer,
-                    e
-                );
-                match e {}
-                //return Err(PeerCommunicationError(e));
-            }
-        };
+        let response = self.post_peer_request(&thebody, None).await;
+
+        let response = match response {
+            Ok(result) => Ok(result),
+            Err(e) if e.is_connect() => Err(PeerCommunicationError::ConnectionError(e)),
+            Err(e) if e.is_timeout() => Err(PeerCommunicationError::ConnectionTimeout(e)),
+            Err(e) => Err(PeerCommunicationError::UnexpectedError(
+                Err(e).context("could not get a response")?,
+            )),
+        }?;
 
         #[derive(Debug, Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -106,11 +104,11 @@ impl BasicPeerClient for B1Peer {
         tracing::debug!(
             "Blocks Downloaded for {}:\n{:#?}",
             &self.peer,
-            result.json::<NextBlocks>().await
+            response.json::<NextBlocks>().await
         );
 
         let result = DownloadResult {
-            peer: self.peer,
+            peer: self.peer.clone(),
             start_height: height,
             number_of_blocks,
             blocks: Vec::<Block>::new(),
