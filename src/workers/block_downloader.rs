@@ -15,7 +15,6 @@ use crate::{
         p2p::{B1Block, PeerAddress},
         Block,
     },
-    peers::{get_peer_cumulative_difficulty, post_peer_request},
     statistics_mode,
 };
 
@@ -180,15 +179,6 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
     Ok(())
 }
 
-/// A downloaded set of blocks.
-#[derive(Debug)]
-struct DownloadResult {
-    blocks: Vec<Block>,
-    peer: PeerAddress,
-    start_height: u64,
-    number_of_blocks: u64,
-}
-
 //TODO: Rework the output of this to use a custom error type that includes the reason and DownloadJob
 #[instrument(name = "Download Blocks Task")]
 async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, DownloadJob> {
@@ -223,7 +213,7 @@ async fn download_blocks_task(job: DownloadJob) -> Result<DownloadResult, Downlo
     struct NextBlocks {
         next_blocks: Vec<B1Block>,
     }
-    tracing::trace!(
+    tracing::debug!(
         "Blocks Downloaded for {}:\n{:#?}",
         &job.peer,
         result.json::<NextBlocks>().await

@@ -9,18 +9,32 @@ use serde_json::{json, Value};
 
 use crate::models::{
     datastore::Datastore,
-    p2p::{PeerAddress, PeerInfo},
+    p2p::{B1Block, PeerAddress, PeerInfo},
+    Block,
 };
+
+// TODO: Move this to models or something
+/// A downloaded set of blocks.
+#[derive(Debug)]
+pub struct DownloadResult {
+    blocks: Vec<Block>,
+    peer: PeerAddress,
+    start_height: u64,
+    number_of_blocks: u32,
+}
 
 #[allow(async_fn_in_trait)]
 pub trait BasicPeerClient {
     fn address(&self) -> PeerAddress;
-    async fn get_blocks_from_height -> Result<Vec<Block>>, PeerCommunicationError>;
+    async fn get_blocks_from_height(
+        &self,
+        height: u64,
+        number_of_blocks: u32,
+    ) -> Result<DownloadResult, PeerCommunicationError>;
     async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error>;
     async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError>;
     async fn get_peer_cumulative_difficulty(&self) -> Result<BigUint>;
 }
-
 
 #[derive(Debug)]
 pub struct B1Peer {
@@ -33,11 +47,11 @@ impl B1Peer {
     }
 
     pub async fn post_peer_request(
-        peer: &PeerAddress,
+        &self,
         request_body: &Value,
         timeout: Option<Duration>,
     ) -> Result<Response, reqwest::Error> {
-        let mut client = reqwest::Client::new().post(peer.to_url());
+        let mut client = reqwest::Client::new().post(self.peer.to_url());
         if let Some(timeout) = timeout {
             client = client.timeout(timeout);
         }
@@ -51,13 +65,71 @@ impl BasicPeerClient for B1Peer {
     fn address(&self) -> PeerAddress {
         self.peer.clone()
     }
+
+    async fn get_blocks_from_height(
+        &self,
+        height: u64,
+        number_of_blocks: u32,
+    ) -> Result<DownloadResult, PeerCommunicationError> {
+        let thebody = json!({
+            "protocol": "B1",
+            "requestType": "getBlocksFromHeight",
+            "height": height,
+            "numBlocks": number_of_blocks,
+        });
+
+        tracing::trace!(
+            "Downloading blocks {} through {} from {}.",
+            height,
+            number_of_blocks,
+            &self.address()
+        );
+
+        let result = match &self.post_peer_request(&thebody, None).await {
+            Ok(result) => result,
+            Err(e) => {
+                tracing::error!(
+                    "Unable to get blocks from {}.\n\tCaused by: {}",
+                    &self.peer,
+                    e
+                );
+                match e {}
+                //return Err(PeerCommunicationError(e));
+            }
+        };
+
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct NextBlocks {
+            next_blocks: Vec<B1Block>,
+        }
+        tracing::debug!(
+            "Blocks Downloaded for {}:\n{:#?}",
+            &self.peer,
+            result.json::<NextBlocks>().await
+        );
+
+        let result = DownloadResult {
+            peer: self.peer,
+            start_height: height,
+            number_of_blocks,
+            blocks: Vec::<Block>::new(),
+        };
+
+        //TODO: Process the blocks just downloaded and return the correct Result
+        // - OK if all in this subchain are good
+        // - Connection error for any connectivity issues
+        // - Parse or Verification error for bad blocks
+        Ok(result)
+    }
+
     async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error> {
         let thebody = json!({
             "protocol": "B1",
             "requestType": "getPeers",
         });
 
-        let response = Self::post_peer_request(&self.peer, &thebody, None).await?;
+        let response = self.post_peer_request(&thebody, None).await?;
 
         tracing::trace!("Parsing peers...");
         #[derive(Debug, serde::Deserialize)]
@@ -87,7 +159,7 @@ impl BasicPeerClient for B1Peer {
             "shareAddress": "false",
         });
 
-        let response = Self::post_peer_request(&self.peer, &thebody, None).await;
+        let response = self.post_peer_request(&thebody, None).await;
 
         let response = match response {
             Ok(r) => Ok(r),
@@ -141,8 +213,9 @@ impl BasicPeerClient for B1Peer {
             "requestType": "getCumulativeDifficulty",
         });
 
-        let response =
-            Self::post_peer_request(&self.peer, &thebody, Some(Duration::from_secs(2))).await;
+        let response = self
+            .post_peer_request(&thebody, Some(Duration::from_secs(2)))
+            .await;
 
         let response = match response {
             Ok(r) => Ok(r),
@@ -240,7 +313,6 @@ pub async fn update_db_peer_info(database: Datastore, peer: impl BasicPeerClient
     Ok(())
 }
 
-
 #[derive(thiserror::Error)]
 pub enum PeerCommunicationError {
     #[error("Missing announced address: {0}")]
@@ -251,7 +323,6 @@ pub enum PeerCommunicationError {
     ConnectionTimeout(#[source] reqwest::Error),
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
-
 }
 
 impl ResponseError for PeerCommunicationError {}
@@ -261,7 +332,6 @@ impl std::fmt::Debug for PeerCommunicationError {
         crate::error_chain_fmt(self, f)
     }
 }
-
 
 /// Blacklist a client for minutes * blacklist_count, for a maximum of 24 hours.
 /// blacklist_count increments by 1 each time a node is blacklisted, so it will
