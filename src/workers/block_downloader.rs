@@ -1,7 +1,5 @@
 use anyhow::Result;
 use num_bigint::BigUint;
-use serde::Deserialize;
-use serde_json::json;
 use std::{collections::VecDeque, time::Duration};
 use tokio::task::{JoinHandle, JoinSet};
 use tracing::{instrument, Instrument};
@@ -12,7 +10,6 @@ use crate::{
     models::{
         datastore::Datastore,
         p2p::{B1Block, PeerAddress},
-        Block,
     },
     peers::{B1Peer, BasicPeerClient, DownloadResult},
     statistics_mode,
