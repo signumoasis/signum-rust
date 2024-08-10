@@ -109,7 +109,7 @@ pub async fn block_downloader(mut database: Datastore, _settings: Settings) -> R
         }
     }
 
-    tracing::debug!("Cumulative difficulties: {:#?}", cumulative_difficulties);
+    tracing::debug!("Cumulative difficulties: {:?}", cumulative_difficulties);
 
     let highest_cumulative_difficulty = statistics_mode(
         cumulative_difficulties
