@@ -12,6 +12,6 @@ p2p:
   #   - "us-east.signum.network"
 # Settings for the Signum SRS client API
 srs_api:
-  base_url: http://localhost:18000
+  base_url: http://localhost:8000
   listen_address: "0.0.0.0"
-  listen_port: 18000
+  listen_port: 8000
