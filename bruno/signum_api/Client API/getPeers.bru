@@ -1,0 +1,22 @@
+meta {
+  name: getPeers
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api_url}}?requestType=getPeers&state=NON_CONNECTED
+  body: none
+  auth: none
+}
+
+params:query {
+  requestType: getPeers
+  state: NON_CONNECTED
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+  Accept: application/json
+}

@@ -1,0 +1,49 @@
+meta {
+  name: processTransactions
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{p2p_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+}
+
+body:json {
+  {
+      "protocol": "B1",
+      "requestType": "processTransactions",
+      "transactions": [
+          {
+              "type": 0,
+              "subtype": 0,
+              "timestamp": 298416440,
+              "deadline": 60,
+              "senderPublicKey": "7347ae2ec9aaa0a93f90a1c394c370a629227928ba2f24843634c81358d2b403",
+              "recipient": "13657951110994294056",
+              "recipientRS": "S-GXBA-7JP9-NR7S-DCQ4V",
+              "amountNQT": "1000000",
+              "feeNQT": "1000000",
+              "signature": "bc008447457a87c46fcecfe7bcfba4686581d42ba5dae53568983c3411339e08c02222692c561fcc40e8c033ddc0d29fe0308d07570f12facad7f2b3ce895b75",
+              "signatureHash": "67ec92dbfd0fba694947d4a96b9677c200feae759f1da598bed8bb80c8531e08",
+              "fullHash": "13ca4b3e4cafa18b2e327b68af4bebd137ffd45591dfecf1b4e146a74d662688",
+              "transaction": "10061515784519928339",
+              "sender": "15595382771538009899",
+              "senderRS": "S-C9TD-24WW-RUD3-FGHVJ",
+              "height": 2147483647,
+              "version": 2,
+              "ecBlockId": "6079409147758822541",
+              "ecBlockHeight": 1237188,
+              "cashBackId": "13420738867631717395",
+              "verify": true,
+              "requestProcessingTime": 1
+          }
+      ]
+  }
+}

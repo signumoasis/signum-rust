@@ -1,0 +1,23 @@
+meta {
+  name: getPeers
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{p2p_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+}
+
+body:json {
+  {
+      "protocol": "B1",
+      "requestType": "getPeers"
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: getMyPeerInfo
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_url}}?requestType=getMyPeerInfo
+  body: none
+  auth: none
+}
+
+params:query {
+  requestType: getMyPeerInfo
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+  Accept: application/json
+}

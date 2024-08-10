@@ -1,0 +1,25 @@
+meta {
+  name: getMyInfo
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api_url}}?requestType=getMyInfo
+  body: none
+  auth: none
+}
+
+params:query {
+  requestType: getMyInfo
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+  Accept: application/json
+}
+
+vars:pre-request {
+  requestType: getMyInfo
+}

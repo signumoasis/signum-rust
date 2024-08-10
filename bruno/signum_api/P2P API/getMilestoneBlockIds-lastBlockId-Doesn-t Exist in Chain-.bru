@@ -1,0 +1,24 @@
+meta {
+  name: getMilestoneBlockIds-lastBlockId-Doesn-t Exist in Chain-
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{p2p_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+}
+
+body:json {
+  {
+      "protocol": "B1",
+      "requestType": "getMilestoneBlockIds",
+      "lastBlockId": {{lastBlockIdNotInChain}}
+  }
+}

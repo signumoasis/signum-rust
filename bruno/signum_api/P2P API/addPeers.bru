@@ -1,0 +1,24 @@
+meta {
+  name: addPeers
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{p2p_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+}
+
+body:json {
+  {
+      "protocol": "B1",
+      "requestType": "addPeers",
+      "peers": ["127.0.0.1"]
+  }
+}

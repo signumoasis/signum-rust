@@ -1,0 +1,136 @@
+meta {
+  name: processBlock
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{p2p_url}}
+  body: json
+  auth: none
+}
+
+headers {
+  User-Agent: {{node_user_agent}}
+  Connection: close
+}
+
+body:json {
+  {
+      "protocol": "B1",
+      "requestType": "processBlock",
+      "version": 4,
+      "timestamp": 298354767,
+      "previousBlock": "18369301224889401486",
+      "totalAmountNQT": 20995342056,
+      "totalFeeNQT": 171800000,
+      "totalFeeCashBackNQT": 1500000,
+      "totalFeeBurntNQT": 165800000,
+      "payloadLength": 1018,
+      "payloadHash": "7fb2df2066af0e12ad2cccd2ae7ae673b3e8ee670ca37d39a34e894aaaf90349",
+      "generatorPublicKey": "6a7b9f594ec0fbffd2bbe8109d5438be5e7747b9be456cba909773404aeb6278",
+      "generationSignature": "ae339924f2cc8565d2a553d72b89d3f944d0fa76e042fc10e65852be769ca40c",
+      "previousBlockHash": "8e40aea923deecfe0c2b1fb8dc31d4ef59197ed192b08a86cc5dbe8bd5c2554e",
+      "blockSignature": "dacb615761b9a6619c97c9bf8777886eff55b7bce205f53f137d339168f7470fc3b3251a2f00c337636cf3d40617be03dd0c827b4b03ef0c2beeb568d748e6e7",
+      "transactions": [
+          {
+              "type": 0,
+              "subtype": 0,
+              "timestamp": 298354701,
+              "deadline": 24,
+              "senderPublicKey": "0936031e61748b9a724dc95ee9fc5292e4f5282ac3d1cf3c8d40b4d822e7213c",
+              "recipient": "11130321392388236382",
+              "amountNQT": 500000000,
+              "feeNQT": 1000000,
+              "ecBlockHeight": 1236933,
+              "ecBlockId": "15722498062156268369",
+              "cashBackId": "13420738867631717395",
+              "signature": "a1dd37dffdaec97d65f6b0d615ab06784f0727ca766f8875936eabb676ed30013b732380d0498992b3ea245362a56b7cae9d231bc77b6e66e8464e6a1eb55f93",
+              "attachment": {},
+              "version": 2
+          },
+          {
+              "type": 0,
+              "subtype": 1,
+              "timestamp": 298354535,
+              "deadline": 1440,
+              "senderPublicKey": "3cd5610384aed89ace1550e54604b382394520089c14db4747fd1e8f188c5658",
+              "amountNQT": 14595342056,
+              "feeNQT": 2000000,
+              "ecBlockHeight": 1236932,
+              "ecBlockId": "15206958044651677745",
+              "cashBackId": "14532404230105986816",
+              "signature": "1b8d016bfb2828f1928c98e66f3b4be56f0ff05d73a29c5033df32aa69a3560e95733f15ae93c33940e3cb3f79359c3049137c2553b3a8b152660b1ab83a66ae",
+              "attachment": {
+                  "version.MultiOutCreation": 1,
+                  "recipients": [
+                      [
+                          "17997500163001214854",
+                          "2026541011"
+                      ],
+                      [
+                          "12625359299301436821",
+                          "9405744078"
+                      ],
+                      [
+                          "12779054813723059063",
+                          "3163056967"
+                      ]
+                  ]
+              },
+              "version": 2
+          },
+          {
+              "type": 0,
+              "subtype": 0,
+              "timestamp": 298354571,
+              "deadline": 24,
+              "senderPublicKey": "0936031e61748b9a724dc95ee9fc5292e4f5282ac3d1cf3c8d40b4d822e7213c",
+              "recipient": "13831709662995834087",
+              "amountNQT": 500000000,
+              "feeNQT": 1000000,
+              "ecBlockHeight": 1236932,
+              "ecBlockId": "15206958044651677745",
+              "cashBackId": "13420738867631717395",
+              "signature": "73227bbeda56f251d13f02078ce913652a0235937498555268afdc2a9feff90d47c1caf1395eaac8a0f75947964670d26aa2e1226453a405c3536440f5a5447b",
+              "attachment": {},
+              "version": 2
+          },
+          {
+              "type": 0,
+              "subtype": 0,
+              "timestamp": 298354569,
+              "deadline": 24,
+              "senderPublicKey": "0936031e61748b9a724dc95ee9fc5292e4f5282ac3d1cf3c8d40b4d822e7213c",
+              "recipient": "11130321392388236382",
+              "amountNQT": 500000000,
+              "feeNQT": 1000000,
+              "ecBlockHeight": 1236932,
+              "ecBlockId": "15206958044651677745",
+              "cashBackId": "13420738867631717395",
+              "signature": "3fddd54dbf53441508fa2b7be9f347463bb4a2807f28abe14cf030d99f59360c6b7ed188cf641d38f0b69044a6747eba375a421de121c890cebb63c7d8e1d688",
+              "attachment": {},
+              "version": 2
+          },
+          {
+              "type": 0,
+              "subtype": 0,
+              "timestamp": 298354702,
+              "deadline": 24,
+              "senderPublicKey": "0936031e61748b9a724dc95ee9fc5292e4f5282ac3d1cf3c8d40b4d822e7213c",
+              "recipient": "13831709662995834087",
+              "amountNQT": 500000000,
+              "feeNQT": 1000000,
+              "ecBlockHeight": 1236933,
+              "ecBlockId": "15722498062156268369",
+              "cashBackId": "13420738867631717395",
+              "signature": "25dd574b1023f06b42b144caf77b8863d1f818f960622446c204ae9c0483ed0e78a14d12b9b063c3ea57da57e58107e005f87c996cb4c6d11f7cfe8ac368564e",
+              "attachment": {},
+              "version": 2
+          }
+      ],
+      "nonce": "9983631486491223727",
+      "baseTarget": "6036338955354410456",
+      "blockATs": "c8b98c03e292de9ab3e1c6f4cdb803bab66cf8ad30b5274f0319e3bdff90b3881acce34052e5895c3e6b3b32e045f230"
+  }
+}
