@@ -25,7 +25,12 @@ pub struct DownloadResult {
 }
 
 #[allow(async_fn_in_trait)]
-pub trait BasicPeerClient {
+pub trait GetPeerInfo {
+    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError>;
+}
+
+#[allow(async_fn_in_trait)]
+pub trait BasicPeerClient: GetPeerInfo {
     fn address(&self) -> PeerAddress;
     async fn get_blocks_from_height(
         &self,
@@ -33,7 +38,6 @@ pub trait BasicPeerClient {
         number_of_blocks: u32,
     ) -> Result<DownloadResult, PeerCommunicationError>;
     async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error>;
-    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError>;
     async fn get_peer_cumulative_difficulty(&self) -> Result<BigUint>;
 }
 
