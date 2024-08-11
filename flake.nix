@@ -21,9 +21,12 @@
             rustPlatform.bindgenHook
           ];
           devDeps = with pkgs; [
+            cargo-deny
+            cargo-edit
             cargo-msrv
             cargo-nextest
             cargo-watch
+            cargo-whatfeatures
             clang
             just
             gdb
