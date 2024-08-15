@@ -14,14 +14,24 @@ use crate::models::{
 use super::{BasicPeerClient, DownloadResult, GetPeerInfo, PeerCommunicationError};
 
 // TODO: Refactor this to use GRPC and actually handle other oasis peers. Right now it's just a B1Peer clone
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct OasisPeer {
     peer: PeerAddress,
+    pub announced_address: Option<PeerAddress>,
+    pub application: String,
+    pub version: String,
+    pub platform: Option<String>,
+    pub share_address: bool,
+    pub network_name: String,
+    pub oasis_info: OasisPeerInfo,
 }
 
 impl OasisPeer {
     pub fn new(peer: PeerAddress) -> Self {
-        Self { peer }
+        Self {
+            peer,
+            ..Default::default()
+        }
     }
 
     pub async fn post_peer_request(
@@ -217,4 +227,9 @@ impl BasicPeerClient for OasisPeer {
 
         Ok(out)
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct OasisPeerInfo {
+    some_thing: String,
 }

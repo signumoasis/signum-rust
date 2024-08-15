@@ -10,7 +10,7 @@ use num_bigint::BigUint;
 
 use crate::models::{
     datastore::Datastore,
-    p2p::{PeerAddress, PeerInfo},
+    p2p::{B1Block, PeerAddress, PeerInfo},
     Block,
 };
 
@@ -22,6 +22,12 @@ pub struct DownloadResult {
     pub peer: PeerAddress,
     pub start_height: u64,
     pub number_of_blocks: u32,
+}
+
+#[derive(Debug)]
+pub enum BlockSelect {
+    BRS(B1Peer),
+    OASIS(OasisPeer),
 }
 
 #[allow(async_fn_in_trait)]
