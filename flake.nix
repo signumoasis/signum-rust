@@ -26,14 +26,37 @@
             cargo-msrv
             cargo-nextest
             cargo-watch
-            cargo-whatfeatures
+            # (cargo-whatfeatures.overrideAttrs (oldAttrs:
+            #   {
+            #     # version = "0.9.11";
+            #     cargoBuildFlags = [
+            #       "--no-default-features"
+            #       "--features=rustls"
+            #     ];
+            #   }))
             clang
             just
             gdb
             lld
             lldb
             nushell
-            surrealdb
+            (surrealdb.overrideAttrs (oldAttrs: rec
+            {
+              pname = "surrealdb";
+              version = "1.5.4";
+              src = fetchFromGitHub {
+                owner = "surrealdb";
+                repo = "surrealdb";
+                rev = "6e9d04d4d7801c359cf3b5ca4398d07efd99bb6a";
+                sha256 = "sha256-PeCb76H0YNpTaTOUOKvs8WB3EHN1zRS+AFoWtlYPMSM=";
+              };
+              cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
+                name = "${pname}-vendor.tar.gz";
+                inherit src;
+                outputHash = "sha256-1VSn9twqTysGdx/NmAQkF1u7fQkrhTJk8sfd4rWg9tw=";
+              });
+            }
+            ))
             panamax
           ];
 
@@ -85,13 +108,13 @@
 
           devShells.nightly = (mkDevShell (pkgs.rust-bin.selectLatestNightlyWith
             (toolchain: toolchain.default.override {
-              extensions = [ "rust-analyzer" ];
+              extensions = [ "rust-src" "rust-analyzer" ];
             })));
           devShells.stable = (mkDevShell (pkgs.rust-bin.stable.latest.default.override {
-            extensions = [ "rust-analyzer" ];
+            extensions = [ "rust-src" "rust-analyzer" ];
           }));
           devShells.msrv = (mkDevShell (pkgs.rust-bin.stable.${msrv}.default.override {
-            extensions = [ "rust-analyzer" ];
+            extensions = [ "rust-src" "rust-analyzer" ];
           }));
         };
     };
