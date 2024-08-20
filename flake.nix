@@ -52,6 +52,23 @@
             lld
             lldb
             nushell
+            # (surrealdb.overrideAttrs (oldAttrs: rec
+            # {
+            #   pname = "surrealdb";
+            #   version = "1.5.4";
+            #   src = fetchFromGitHub {
+            #     owner = "surrealdb";
+            #     repo = "surrealdb";
+            #     rev = "c9861d8aa9390397c62e325ecc00e66e6358acda";
+            #     sha256 = "sha256-KtR+qU2Xys4NkEARZBbO8mTPa7EI9JplWvXdtuLt2vE=";
+            #   };
+            #   cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
+            #     name = "${pname}-vendor.tar.gz";
+            #     inherit src;
+            #     outputHash = "sha256-1wtfJUmvqv7FeZr+qDccln6gmAqN1eV0lJEvZs5KlmA=";
+            #   });
+            # }
+            # ))
             panamax
           ];
 
