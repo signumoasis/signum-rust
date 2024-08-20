@@ -47,7 +47,9 @@ impl SrsApiApplication {
         self.port
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
+        tracing::info!("Starting SRS API Application");
         self.server.await
     }
 }

@@ -10,7 +10,9 @@ use crate::{
     peers::{update_db_peer_info, B1Peer, BasicPeerClient},
 };
 
+#[tracing::instrument("skip_all")]
 pub async fn run_peer_finder_forever(database: Datastore, settings: Settings) -> Result<()> {
+    tracing::info!("Starting Peer Finder");
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(

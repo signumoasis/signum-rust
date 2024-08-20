@@ -9,7 +9,9 @@ use crate::{
     peers::{update_db_peer_info, B1Peer},
 };
 
+#[tracing::instrument(skip_all)]
 pub async fn run_peer_info_trader_forever(database: Datastore) -> Result<()> {
+    tracing::info!("Starting peer info trader task");
     loop {
         // Open the job-level span here so we also include the job_id in the error message if this result comes back Error.
         let span = tracing::span!(
