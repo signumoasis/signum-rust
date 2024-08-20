@@ -64,13 +64,11 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     #[tracing::instrument(skip_all)]
     pub async fn get_db(&self) -> Result<Datastore, anyhow::Error> {
+        tracing::info!("Getting database");
         let db = any::connect(&self.filename).await?;
         // let db = any::connect(format!("speedb:{}", self.filename)).await?;
 
-        if !&self.filename.starts_with("speedb:")
-            && !self.filename.starts_with("file:")
-            && !&self.filename.starts_with("mem:")
-        {
+        if !self.filename.starts_with("file:") && !&self.filename.starts_with("mem:") {
             db.signin(Root {
                 username: "root",
                 password: "root",
