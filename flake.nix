@@ -26,37 +26,32 @@
             cargo-msrv
             cargo-nextest
             cargo-watch
-            # (cargo-whatfeatures.overrideAttrs (oldAttrs:
-            #   {
-            #     # version = "0.9.11";
-            #     cargoBuildFlags = [
-            #       "--no-default-features"
-            #       "--features=rustls"
-            #     ];
-            #   }))
+            (cargo-whatfeatures.overrideAttrs (oldAttrs: rec
+            {
+              pname = "cargo-whatfeatures";
+              version = "0.9.13";
+              src = fetchFromGitHub {
+                owner = "museun";
+                repo = "cargo-whatfeatures";
+                rev = "v0.9.13";
+                sha256 = "sha256-YJ08oBTn9OwovnTOuuc1OuVsQp+/TPO3vcY4ybJ26Ms=";
+              };
+              cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
+                name = "${pname}-vendor.tar.gz";
+                inherit src;
+                outputHash = "sha256-8pccXL+Ud3ufYcl2snoSxIfGM1tUR53GUrIp397Rh3o=";
+              });
+              cargoBuildFlags = [
+                "--no-default-features"
+                "--features=rustls"
+              ];
+            }))
             clang
             just
             gdb
             lld
             lldb
             nushell
-            (surrealdb.overrideAttrs (oldAttrs: rec
-            {
-              pname = "surrealdb";
-              version = "1.5.4";
-              src = fetchFromGitHub {
-                owner = "surrealdb";
-                repo = "surrealdb";
-                rev = "6e9d04d4d7801c359cf3b5ca4398d07efd99bb6a";
-                sha256 = "sha256-PeCb76H0YNpTaTOUOKvs8WB3EHN1zRS+AFoWtlYPMSM=";
-              };
-              cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
-                name = "${pname}-vendor.tar.gz";
-                inherit src;
-                outputHash = "sha256-1VSn9twqTysGdx/NmAQkF1u7fQkrhTJk8sfd4rWg9tw=";
-              });
-            }
-            ))
             panamax
           ];
 
