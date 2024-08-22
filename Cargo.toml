@@ -32,7 +32,7 @@ serde_with = { version = "3.9" }
 #     "runtime-tokio-rustls",
 #     "chrono",
 # ] }
-surrealdb = { version = "1.5.4", features = ["kv-mem"] }
+surrealdb-alpha = { version = "2.0.9", features = ["kv-mem"] }
 thiserror = "1.0.63"
 tokio = { version = "1.39", features = ["full"] }
 tracing = { version = "0.1", features = ["log"] }
