@@ -52,23 +52,25 @@
             lld
             lldb
             nushell
-            # (surrealdb.overrideAttrs (oldAttrs: rec
-            # {
-            #   pname = "surrealdb";
-            #   version = "1.5.4";
-            #   src = fetchFromGitHub {
-            #     owner = "surrealdb";
-            #     repo = "surrealdb";
-            #     rev = "c9861d8aa9390397c62e325ecc00e66e6358acda";
-            #     sha256 = "sha256-KtR+qU2Xys4NkEARZBbO8mTPa7EI9JplWvXdtuLt2vE=";
-            #   };
-            #   cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
-            #     name = "${pname}-vendor.tar.gz";
-            #     inherit src;
-            #     outputHash = "sha256-1wtfJUmvqv7FeZr+qDccln6gmAqN1eV0lJEvZs5KlmA=";
-            #   });
-            # }
-            # ))
+            (surrealdb.overrideAttrs (oldAttrs: rec
+            {
+              pname = "surrealdb";
+              version = "2.0.0";
+              src = fetchFromGitHub {
+                owner = "surrealdb";
+                repo = "surrealdb";
+                rev = "v2.0.0-alpha.10";
+                sha256 = "sha256-PYZHPQ/PqdaWEvhp5Iu0O8FmyWCZlB2TlCyI9ofWHzQ=";
+              };
+              cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
+                name = "${pname}-vendor.tar.gz";
+                inherit src;
+                outputHash = "sha256-L14D5Cf5kDpfNiRS28a8uprTiuIsys5srgR7Ah0wgic=";
+              });
+              cargoBuildFlags = [
+              ];
+            }
+            ))
             panamax
           ];
 
