@@ -1,9 +1,9 @@
 # signum-rs
 
-## Pre-requisites to Compile
+## IMPORTANT
 
-You must have Clang compiler installed tpo build this project
-It is required by the speedb crate.
+The following readme is old. Parts of this may still be true but this project is moving fast and
+changes to the design and the code are constantly being made.
 
 ## Design
 
