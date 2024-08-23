@@ -5,6 +5,9 @@
 The following readme is old. Parts of this may still be true but this project is moving fast and
 changes to the design and the code are constantly being made.
 
+Also, while efforts will be made to avoid pushing code that doesn't build, this is not yet a
+guarantee. If you can't build, try backing up the commit tree until you find a parent that will.
+
 ## Design
 
 A single executable file that contains all the logic required to be a full node, however it will
