@@ -40,7 +40,7 @@ impl Datastore {
         let blacklist_base_minutes = 10;
 
         let response = self.db
-        .query(BeginStatement)
+        .query(BeginStatement::default())
         .query(
             r#"
                 UPDATE peer
@@ -51,8 +51,8 @@ impl Datastore {
             "#,
         )
         .bind(("blacklist_base_minutes", blacklist_base_minutes))
-        .bind(("peer", &peer))
-        .query(CommitStatement)
+        .bind(("peer", peer.clone()))
+        .query(CommitStatement::default())
         .await
         .context(format!(
             "could not blacklist {}",
@@ -77,7 +77,7 @@ impl Datastore {
                 }
             "#,
             )
-            .bind(("announced_address", &peer))
+            .bind(("announced_address", peer.clone()))
             .await
             .context("could not create a new peer in the database")?;
         Ok(response)
@@ -87,7 +87,7 @@ impl Datastore {
     pub async fn deblacklist_peer(&self, peer: PeerAddress) -> Result<Response, DatastoreError> {
         let response = self
             .db
-            .query(BeginStatement)
+            .query(BeginStatement::default())
             .query(
                 r#"
                 UPDATE peer
@@ -97,8 +97,8 @@ impl Datastore {
                     WHERE announced_address = $peer
             "#,
             )
-            .bind(("peer", &peer))
-            .query(CommitStatement)
+            .bind(("peer", peer.clone()))
+            .query(CommitStatement::default())
             .await
             .context(format!("could not deblacklist {}", &peer))?;
         Ok(response)
@@ -193,7 +193,7 @@ impl Datastore {
     ) -> Result<Response, DatastoreError> {
         let response = self
             .db
-            .query(BeginStatement)
+            .query(BeginStatement::default())
             .query(
                 r#"
                 UPDATE peer
@@ -201,8 +201,8 @@ impl Datastore {
                 WHERE announced_address = $peer
             "#,
             )
-            .bind(("peer", &peer))
-            .query(CommitStatement)
+            .bind(("peer", peer.clone()))
+            .query(CommitStatement::default())
             .await
             .context(format!(
                 "could not increment attempts_since_last_seen for {}",
@@ -220,7 +220,7 @@ impl Datastore {
     ) -> Result<Response, DatastoreError> {
         let response = self
             .db
-            .query(BeginStatement)
+            .query(BeginStatement::default())
             .query(
                 r#"
                         UPDATE peer
@@ -238,7 +238,7 @@ impl Datastore {
                         WHERE announced_address = $announced_address
                     "#,
             )
-            .bind(("announced_address", &peer_address))
+            .bind(("announced_address", peer_address.clone()))
             .bind(("new_announced_address", peer_info.announced_address))
             .bind(("ip_address", new_ip_address))
             .bind(("application", peer_info.application))
@@ -248,7 +248,7 @@ impl Datastore {
             .bind(("network", peer_info.network_name));
 
         let response = response
-            .query(CommitStatement)
+            .query(CommitStatement::default())
             .await
             .context(format!("unable to update peer info for {}", peer_address))?;
 

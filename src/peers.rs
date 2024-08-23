@@ -13,7 +13,7 @@ use serde_json::json;
 
 use crate::models::{
     datastore::Datastore,
-    p2p::{B1Block, PeerAddress, PeerInfo},
+    p2p::{PeerAddress, PeerInfo},
     Block,
 };
 
