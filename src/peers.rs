@@ -1,12 +1,15 @@
 mod b1_peer;
 mod oasis_peer;
 
+use std::{str::FromStr, time::Duration};
+
 pub use b1_peer::B1Peer;
 pub use oasis_peer::OasisPeer;
 
 use actix_web::ResponseError;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use num_bigint::BigUint;
+use serde_json::json;
 
 use crate::models::{
     datastore::Datastore,
@@ -31,12 +34,7 @@ pub enum BlockSelect {
 }
 
 #[allow(async_fn_in_trait)]
-pub trait GetPeerInfo {
-    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError>;
-}
-
-#[allow(async_fn_in_trait)]
-pub trait BasicPeerClient: GetPeerInfo {
+pub trait BasicPeerClient {
     fn address(&self) -> PeerAddress;
     async fn get_blocks_from_height(
         &self,
@@ -45,6 +43,69 @@ pub trait BasicPeerClient: GetPeerInfo {
     ) -> Result<DownloadResult, PeerCommunicationError>;
     async fn get_peers(&self) -> Result<Vec<PeerAddress>, anyhow::Error>;
     async fn get_peer_cumulative_difficulty(&self) -> Result<BigUint>;
+    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError>;
+}
+
+/// Makes an http request to the supplied peer address and parses the returned information
+/// into a [`PeerInfo`].
+///
+/// Returns a tuple of ([`PeerInfo`], [`String`]) where the string is the resolved IP
+/// address of the peer.
+#[tracing::instrument]
+async fn get_peer_info(
+    database: Datastore,
+    peer: PeerAddress,
+) -> Result<(PeerInfo, String), PeerCommunicationError> {
+    let thebody = json!({
+        "protocol": "B1",
+        "requestType": "getInfo",
+        "announcedAddress": "nodomain.com",
+        "application": "BRS",
+        "version": "3.8.0",
+        "platform": "signum-rs",
+        "shareAddress": "false",
+    });
+
+    //let response = post_peer_request(&thebody, None).await;
+    let client = reqwest::Client::new()
+        .post(peer.to_url())
+        .timeout(Duration::from_secs(2))
+        .header("User-Agent", "BRS/3.8.2")
+        .json(&thebody);
+
+    let response = client.send().await;
+
+    let response = match response {
+        Ok(r) => Ok(r),
+        Err(e) if e.is_connect() => Err(PeerCommunicationError::ConnectionError(e)),
+        Err(e) if e.is_timeout() => Err(PeerCommunicationError::ConnectionTimeout(e)),
+        Err(e) => Err(PeerCommunicationError::UnexpectedError(
+            Err(e).context("could not get a response")?,
+        )),
+    }?;
+
+    let peer_ip = response
+        .remote_addr()
+        .ok_or_else(|| anyhow::anyhow!("peer response did not have an IP address"))?
+        .ip()
+        .to_string();
+
+    tracing::trace!("found ip address {} for PeerAddress {}", &peer_ip, peer);
+
+    let mut peer_info = match response.json::<PeerInfo>().await {
+        Ok(i) => Ok(i),
+        Err(e) if e.is_decode() => Err(PeerCommunicationError::ContentDecodeError(e)),
+        Err(e) => Err(PeerCommunicationError::UnexpectedError(
+            Err(e).context("could not convert body to PeerInfo")?,
+        )),
+    }?;
+
+    // Use the peer ip if there is no announced_address
+    if peer_info.announced_address.is_none() {
+        peer_info.announced_address = Some(PeerAddress::from_str(&peer_ip)?);
+    }
+
+    Ok((peer_info, peer_ip))
 }
 
 /// Requests peer information from the supplied PeerAddress. Updates the database

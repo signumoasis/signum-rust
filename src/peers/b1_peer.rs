@@ -11,7 +11,7 @@ use crate::models::{
     Block,
 };
 
-use super::{BasicPeerClient, DownloadResult, GetPeerInfo, PeerCommunicationError};
+use super::{BasicPeerClient, DownloadResult, PeerCommunicationError};
 
 #[derive(Debug)]
 pub struct B1Peer {
@@ -35,64 +35,6 @@ impl B1Peer {
         client = client.header("User-Agent", "BRS/3.8.2").json(&request_body);
 
         client.send().await
-    }
-}
-
-impl GetPeerInfo for B1Peer {
-    /// Makes an http request to the supplied peer address and parses the returned information
-    /// into a [`PeerInfo`].
-    ///
-    /// Returns a tuple of ([`PeerInfo`], [`String`]) where the string is the resolved IP
-    /// address of the peer.
-    #[tracing::instrument]
-    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError> {
-        let thebody = json!({
-            "protocol": "B1",
-            "requestType": "getInfo",
-            "announcedAddress": "nodomain.com",
-            "application": "BRS",
-            "version": "3.8.0",
-            "platform": "signum-rs",
-            "shareAddress": "false",
-        });
-
-        let response = self.post_peer_request(&thebody, None).await;
-
-        let response = match response {
-            Ok(r) => Ok(r),
-            Err(e) if e.is_connect() => Err(PeerCommunicationError::ConnectionError(e)),
-            Err(e) if e.is_timeout() => Err(PeerCommunicationError::ConnectionTimeout(e)),
-            Err(e) => Err(PeerCommunicationError::UnexpectedError(
-                Err(e).context("could not get a response")?,
-            )),
-        }?;
-
-        let peer_ip = response
-            .remote_addr()
-            .ok_or_else(|| anyhow::anyhow!("peer response did not have an IP address"))?
-            .ip()
-            .to_string();
-
-        tracing::trace!(
-            "found ip address {} for PeerAddress {}",
-            &peer_ip,
-            &self.peer
-        );
-
-        let mut peer_info = match response.json::<PeerInfo>().await {
-            Ok(i) => Ok(i),
-            Err(e) if e.is_decode() => Err(PeerCommunicationError::ContentDecodeError(e)),
-            Err(e) => Err(PeerCommunicationError::UnexpectedError(
-                Err(e).context("could not convert body to PeerInfo")?,
-            )),
-        }?;
-
-        // Use the peer ip if there is no announced_address
-        if peer_info.announced_address.is_none() {
-            peer_info.announced_address = Some(PeerAddress::from_str(&peer_ip)?);
-        }
-
-        Ok((peer_info, peer_ip))
     }
 }
 
@@ -215,5 +157,9 @@ impl BasicPeerClient for B1Peer {
             .context("couldn't convert string to a BigUint")?;
 
         Ok(out)
+    }
+
+    async fn get_peer_info(&self) -> Result<(PeerInfo, String), PeerCommunicationError> {
+        todo!()
     }
 }
