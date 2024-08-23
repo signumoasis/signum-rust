@@ -23,6 +23,7 @@
           devDeps = with pkgs; [
             cargo-deny
             cargo-edit
+            cargo-expand
             cargo-msrv
             cargo-nextest
             cargo-watch
@@ -72,6 +73,8 @@
             }
             ))
             panamax
+            sass
+            tailwindcss
           ];
 
           cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
@@ -96,9 +99,10 @@
           mkDevShell = rustc:
             pkgs.mkShell {
               shellHook = ''
-                export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
+                exec zellij --layout ./zellij_layout.kdl
               '';
               LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
+              RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
               buildInputs = runtimeDeps;
               nativeBuildInputs = buildDeps ++ devDeps ++ [ rustc ];
             };
