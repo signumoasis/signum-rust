@@ -99,7 +99,7 @@
           mkDevShell = rustc:
             pkgs.mkShell {
               shellHook = ''
-                exec zellij #--layout ./zellij_layout.kdl
+                exec zellij --layout ./zellij_layout.kdl
               '';
               LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
               RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
