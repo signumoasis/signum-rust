@@ -12,7 +12,8 @@ layout {
           command "lazygit"
         }
         pane size="40%" {
-          command "cargo watch -x test -x 'run | bunyan'"
+          command "cargo"
+          args "watch" "-x" "test" "-x" "'run | bunyan'"
         }
       }
     }
@@ -25,7 +26,8 @@ layout {
       plugin location="zellij:tab-bar"
     }
     pane {
-      command "just surrealdb"
+      command "just"
+      args "surrealdb"
     }
     pane size=2 borderless=true {
       plugin location="zellij:status-bar"
