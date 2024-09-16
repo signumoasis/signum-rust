@@ -1,12 +1,34 @@
 layout {
-  pane size=1 borderless=true {
-    plugin location="zellij:tab-bar"
+  tab focus=true {
+    pane size=1 borderless=true {
+      plugin location="zellij:tab-bar"
+    }
+    pane split_direction="vertical" {
+      pane {
+        focus true
+      }
+      pane split_direction="horizontal" {
+        pane size="60%" {
+          command "lazygit"
+        }
+        pane size="40%" {
+          command "cargo watch -x test -x 'run | bunyan'"
+        }
+      }
+    }
+    pane size=2 borderless=true {
+      plugin location="zellij:status-bar"
+    }
   }
-  pane split_direction="horizontal" {
-    pane size="80%"
-    pane size="20%"
-  }
-  pane size=2 borderless=true {
-    plugin location="zellij:status-bar"
+  tab {
+    pane size=1 borderless=true {
+      plugin location="zellij:tab-bar"
+    }
+    pane {
+      command "just surrealdb"
+    }
+    pane size=2 borderless=true {
+      plugin location="zellij:status-bar"
+    }
   }
 }
