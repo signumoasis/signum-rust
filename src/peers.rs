@@ -9,7 +9,8 @@ pub use oasis_peer::OasisPeer;
 use actix_web::ResponseError;
 use anyhow::{Context, Result};
 use num_bigint::BigUint;
-use serde_json::json;
+use reqwest::Response;
+use serde_json::{json, Value};
 
 use crate::models::{
     datastore::Datastore,
@@ -156,13 +157,27 @@ pub async fn update_db_peer_info(database: Datastore, peer: PeerAddress) -> Resu
     Ok(())
 }
 
+pub async fn post_peer_request(
+    peer: &PeerAddress,
+    request_body: &Value,
+    timeout: Option<Duration>,
+) -> Result<Response, reqwest::Error> {
+    let mut client = reqwest::Client::new().post(peer.to_url());
+    if let Some(timeout) = timeout {
+        client = client.timeout(timeout);
+    }
+    client = client.header("User-Agent", "BRS/3.8.2").json(&request_body);
+
+    client.send().await
+}
+
 async fn get_peers(peer_address: &PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
     let thebody = json!({
         "protocol": "B1",
         "requestType": "getPeers",
     });
 
-    let response = post_peer_request(&thebody, None).await?;
+    let response = post_peer_request(peer_address, &thebody, None).await?;
 
     tracing::trace!("Parsing peers...");
     #[derive(Debug, serde::Deserialize)]
