@@ -21,6 +21,7 @@
             rustPlatform.bindgenHook
           ];
           devDeps = with pkgs; [
+            bunyan-rs
             cargo-deny
             cargo-edit
             cargo-expand
