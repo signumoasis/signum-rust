@@ -13,7 +13,7 @@ layout {
         }
         pane size="40%" {
           command "cargo"
-          args "watch" "-x" "test" "-x" "'run | bunyan'"
+          args "watch" "-x" "test" "-x" "run"
         }
       }
     }
