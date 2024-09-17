@@ -36,7 +36,7 @@ impl Datastore {
     /// 2nd blacklist: 20 minutes,
     /// 3rd blacklist: 30 minutes,
     /// etc. until a maximum of 24 hours at a time.
-    pub async fn blacklist_peer(&self, peer: PeerAddress) -> Result<Response, DatastoreError> {
+    pub async fn blacklist_peer(&self, peer: &PeerAddress) -> Result<Response, DatastoreError> {
         let blacklist_base_minutes = 10;
 
         let response = self.db
@@ -189,7 +189,7 @@ impl Datastore {
     /// Increments the number of attempts to contact a peer since a peer was last seen.
     pub async fn increment_attempts_since_last_seen(
         &self,
-        peer: PeerAddress,
+        peer: &PeerAddress,
     ) -> Result<Response, DatastoreError> {
         let response = self
             .db

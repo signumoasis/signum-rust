@@ -52,10 +52,7 @@ pub trait BasicPeerClient {
 /// Returns a tuple of ([`PeerInfo`], [`String`]) where the string is the resolved IP
 /// address of the peer.
 #[tracing::instrument]
-async fn get_peer_info(
-    database: Datastore,
-    peer: PeerAddress,
-) -> Result<(PeerInfo, String), PeerCommunicationError> {
+async fn get_peer_info(peer: &PeerAddress) -> Result<(PeerInfo, String), PeerCommunicationError> {
     let thebody = json!({
         "protocol": "B1",
         "requestType": "getInfo",
@@ -111,8 +108,8 @@ async fn get_peer_info(
 /// Requests peer information from the supplied PeerAddress. Updates the database
 /// with the acquired information. Returns a [`anyhow::Result<()>`].
 #[tracing::instrument(name = "Update Info Task", skip_all)]
-pub async fn update_db_peer_info(database: Datastore, peer: impl BasicPeerClient) -> Result<()> {
-    let peer_info = peer.get_peer_info().await;
+pub async fn update_db_peer_info(database: Datastore, peer: PeerAddress) -> Result<()> {
+    let peer_info = get_peer_info(&peer).await;
     match peer_info {
         Ok(info) => {
             tracing::trace!("PeerInfo: {:?}", &info);
@@ -120,64 +117,62 @@ pub async fn update_db_peer_info(database: Datastore, peer: impl BasicPeerClient
             let ip = info.1;
             let info = info.0;
 
-            let _response = database.update_peer_info(peer.address(), ip, info).await?;
+            let _response = database.update_peer_info(peer, ip, info).await?;
         }
         Err(PeerCommunicationError::ConnectionError(e)) => {
-            tracing::warn!(
-                "Connection error to peer {}. Blacklisting.",
-                &peer.address(),
-            );
-            tracing::debug!(
-                "Connection error for {}: Caused by:\n\t{:#?}",
-                &peer.address(),
-                e
-            );
-            database
-                .increment_attempts_since_last_seen(peer.address())
-                .await?;
-            database.blacklist_peer(peer.address()).await?;
+            tracing::warn!("Connection error to peer {}. Blacklisting.", &peer,);
+            tracing::debug!("Connection error for {}: Caused by:\n\t{:#?}", &peer, e);
+            database.increment_attempts_since_last_seen(&peer).await?;
+            database.blacklist_peer(&peer).await?;
         }
         Err(PeerCommunicationError::ConnectionTimeout(e)) => {
             // TODO: Blacklist only after a certain number of attempts_since_last_seen
             // TODO: deblacklist on every 10th attempt since last seen to give it a chance again?
             // tracing::warn!("Connection to peer {} has timed out. Blacklisting.", &peer);
-            tracing::debug!(
-                "Connection timeout for {}. Caused by: \n\t{:#?}",
-                &peer.address(),
-                e
-            );
+            tracing::debug!("Connection timeout for {}. Caused by: \n\t{:#?}", &peer, e);
 
-            database
-                .increment_attempts_since_last_seen(peer.address())
-                .await?;
+            database.increment_attempts_since_last_seen(&peer).await?;
             // database.blacklist_peer(peer).await?;
         }
         Err(PeerCommunicationError::ContentDecodeError(e)) => {
             tracing::warn!(
                 "Peer {} response could not be properly decoded. Blacklisting peer.",
-                &peer.address(),
+                &peer,
             );
-            tracing::debug!(
-                "Peer {} decoding error. Caused by:\n\t{:#?}",
-                &peer.address(),
-                e
-            );
-            database.blacklist_peer(peer.address()).await?;
+            tracing::debug!("Peer {} decoding error. Caused by:\n\t{:#?}", &peer, e);
+            database.blacklist_peer(&peer).await?;
         }
         Err(PeerCommunicationError::UnexpectedError(e)) => {
             tracing::error!(
                 "Problem getting peer info for {}. Caused by:\n\t{:#?}",
-                &peer.address(),
+                &peer,
                 e
             );
 
-            database
-                .increment_attempts_since_last_seen(peer.address())
-                .await?;
+            database.increment_attempts_since_last_seen(&peer).await?;
         }
     }
 
     Ok(())
+}
+
+async fn get_peers(peer_address: &PeerAddress) -> Result<Vec<PeerAddress>, anyhow::Error> {
+    let thebody = json!({
+        "protocol": "B1",
+        "requestType": "getPeers",
+    });
+
+    let response = post_peer_request(&thebody, None).await?;
+
+    tracing::trace!("Parsing peers...");
+    #[derive(Debug, serde::Deserialize)]
+    struct PeerContainer {
+        #[serde(rename = "peers")]
+        peers: Vec<PeerAddress>,
+    }
+    let result = response.json::<PeerContainer>().await?;
+    tracing::trace!("Peers successfully parsed: {:#?}", &result);
+    Ok(result.peers)
 }
 
 #[derive(thiserror::Error)]
@@ -204,7 +199,7 @@ impl std::fmt::Debug for PeerCommunicationError {
 /// blacklist_count increments by 1 each time a node is blacklisted, so it will
 /// be ignored for longer and longer, up to 24 hours before retry.
 pub async fn blacklist_peer(database: Datastore, peer: PeerAddress) -> Result<()> {
-    let _response = database.blacklist_peer(peer).await?;
+    let _response = database.blacklist_peer(&peer).await?;
     Ok(())
 }
 

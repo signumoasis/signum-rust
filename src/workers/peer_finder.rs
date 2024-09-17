@@ -79,7 +79,10 @@ pub async fn peer_finder(mut database: Datastore, settings: Settings) -> Result<
                         "Attempting to update peer info database for '{}'",
                         &peer_address
                     );
-                    tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
+                    tokio::spawn(
+                        update_db_peer_info(database.clone(), peer.address().clone())
+                            .in_current_span(),
+                    );
                     new_peers_count += 1;
                 } else {
                     tracing::debug!("Already have peer {}", peer_address)

@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     models::datastore::Datastore,
-    peers::{update_db_peer_info, B1Peer},
+    peers::{update_db_peer_info, B1Peer, BasicPeerClient},
 };
 
 #[tracing::instrument(skip_all)]
@@ -42,7 +42,7 @@ pub async fn peer_info_trader(database: Datastore) -> Result<()> {
         tracing::debug!("Launching update task for {}", &peer_address);
         let peer = B1Peer::new(peer_address);
         // Spawn update info task
-        tokio::spawn(update_db_peer_info(database.clone(), peer).in_current_span());
+        tokio::spawn(update_db_peer_info(database.clone(), peer.address()).in_current_span());
     }
 
     Ok(())
